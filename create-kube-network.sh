@@ -57,7 +57,7 @@ network_name="${user}-${git_hash}-${random}"
 # generate casper-tool artifacts and sync to s3
 ######################################################
 
-./casper-tool.py create-network --genesis-in $genesis_in_seconds artifacts/$network_name
+./casper-tool.py create-network --genesis-in $genesis_in_seconds --hosts-file kube-hosts.yaml artifacts/$network_name
 aws s3 sync artifacts/$network_name s3://$build_bucket/networks/$network_name
 
 
