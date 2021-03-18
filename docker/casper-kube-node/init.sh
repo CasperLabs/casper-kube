@@ -1,12 +1,11 @@
 #!/bin/bash
 
 bucket_url=http://builds.casperlabs.io
-arch=`arch`
 
 
-if [ -z "$CASPER_NODE_GIT_REV" ]
+if [ -z "$NETWORK_NAME" ]
 then
-    echo "CASPER_NODE_GIT_REV not set, exiting"
+    echo "NETWORK_NAME not set, exiting"
     exit 1
 fi
 
@@ -17,38 +16,16 @@ then
     exit 1
 fi
 
-network_name=$NETWORK_NAME
 
-
-
-mkdir /storage
-#mkdir /config
+#config
+aws s3 sync s3://$bucket_url/networks/$NETWORK_NAME/nodes/casper-node-$CASPER_NODE_INDEX/etc/ /etc/
 
 #binary
-#curl $bucket_url/$CASPER_NODE_GIT_REV/build/$arch/casper-node -o /usr/bin/casper-node
-aws s3 sync s3://builds.casperlabs.io/networks/$network_name/staging/bin /var/lib/casper/bin
+aws s3 sync s3://$bucket_url/networks/$NETWORK_NAME/staging/bin /var/lib/casper/bin
 chmod +x /var/lib/casper/bin/1_0_0/casper-node
 
-#marc casper-tool
-#node_config="$bucket_url/$network-name/node-$CASPER_NODE_INDEX/"
-#aws s3 sync s3://builds.casperlabs.io/networks/$network_name/node-$CASPER_NODE_INDEX /config/node
-#aws s3 sync s3://builds.casperlabs.io/networks/$network_name/chain /config/chain
-#cd /config/node #relative paths as per config.toml 
-#/usr/bin/casper-node validator /config/node/config.toml &
 
-
-#danw casper-tool
-#node_config="$bucket_url/networks/$network_name/nodes/node-$CASPER_NODE_INDEX"
-
-aws s3 sync s3://builds.casperlabs.io/networks/$network_name/nodes/casper-node-$CASPER_NODE_INDEX/etc/ /etc/
-
-#/usr/bin/casper-node validator /etc/casper/1_0_0/config.toml &
+#prevent the container from exiting even if casper-node exit's  
 /var/lib/casper/bin/1_0_0/casper-node validator /etc/casper/1_0_0/config.toml &
-
-
-
-
-
-
 tail -f /dev/null
 
