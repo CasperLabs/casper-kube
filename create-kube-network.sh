@@ -183,7 +183,22 @@ spec:
     - name: casper-node
       protocol: TCP
       port: 34553
-      targetPort: 34553      
+      targetPort: 34553   
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: $node_label-pv-claim
+spec:
+  storageClassName: gp2
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
 EOF
 
 done
