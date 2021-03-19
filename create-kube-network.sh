@@ -14,6 +14,7 @@ build_bucket="builds.casperlabs.io"
 DEFINE_string 'node_count' '5' 'node count' 't'
 DEFINE_string 'node_cpu' '500m' 'node cpu request' 'c'
 DEFINE_string 'node_mem' '500Mi' 'node memory request' 'm'
+DEFINE_string 'node_storage' '1Gi' 'node storage volume size' 's'
 DEFINE_string 'genesis_in_seconds' '300' 'genesis start x seconds in the future' 'g'
 
 # Parse the command-line.
@@ -27,6 +28,7 @@ echo "--------------------------------------------------"
 echo "node_count: ${FLAGS_node_count}"
 echo "node_cpu: ${FLAGS_node_cpu}"
 echo "node_mem: ${FLAGS_node_mem}"
+echo "node_storage: ${FLAGS_node_storage}"
 echo "genesis_in_seconds: ${FLAGS_genesis_in_seconds}"
 
 node_count=$FLAGS_node_count
@@ -34,6 +36,7 @@ node_mem_limit=$FLAGS_node_mem
 node_mem_request=$FLAGS_node_mem
 node_cpu_limit=$FLAGS_node_cpu
 node_cpu_request=$FLAGS_node_cpu
+node_storage=$FLAGS_node_storage
 genesis_in_seconds=$FLAGS_genesis_in_seconds
 
 ############################################################################################
@@ -144,8 +147,8 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
-      
+      storage: $node_storage
+
 ---
 kind: Pod
 apiVersion: v1
