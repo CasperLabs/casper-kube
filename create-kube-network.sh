@@ -12,9 +12,10 @@ genesis_in_seconds=300
 ############################################################################################
 
 
+DEFINE_string 'node_count' '5' 'node count' 't'
 DEFINE_string 'node_cpu' '100m' 'node cpu request' 'c'
 DEFINE_string 'node_mem' '500Mi' 'node memory request' 'm'
-DEFINE_string 'node_count' '5' 'node count' 't'
+DEFINE_string 'genesis_in_seconds' '300' 'genesis start x seconds in the future' 'g'
 
 # Parse the command-line.
 FLAGS "$@" || exit 1
@@ -29,6 +30,7 @@ node_mem_limit=$FLAGS_node_mem
 node_mem_request=$FLAGS_node_mem
 node_cpu_limit=$FLAGS_node_cpu
 node_cpu_request=$FLAGS_node_cpu
+genesis_in_seconds=$FLAGS_genesis_in_seconds
 
 ############################################################################################
 # sanity checks 
