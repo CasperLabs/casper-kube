@@ -4,7 +4,6 @@ source ./shflags
 
 docker_repository="878804750492.dkr.ecr.us-east-2.amazonaws.com"
 build_bucket="builds.casperlabs.io"
-genesis_in_seconds=300
 
 
 ############################################################################################
