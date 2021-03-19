@@ -97,6 +97,11 @@ echo "./casper-tool.py create-network --genesis-in $genesis_in_seconds --hosts-f
 echo "--------------------------------------------------"
 
 ./casper-tool.py create-network --genesis-in $genesis_in_seconds --hosts-file kube-hosts.yaml artifacts/$network_name
+
+echo "--------------------------------------------------"
+echo "uploading artifacts to s3"
+echo "--------------------------------------------------"
+
 aws s3 sync artifacts/$network_name s3://$build_bucket/networks/$network_name
 
 
