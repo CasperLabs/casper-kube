@@ -24,6 +24,7 @@ eval set -- "${FLAGS_ARGV}"
 echo "node_count: ${FLAGS_node_count}"
 echo "node_cpu: ${FLAGS_node_cpu}"
 echo "node_mem: ${FLAGS_node_mem}"
+echo "genesis_in_seconds: ${FLAGS_genesis_in_seconds}"
 
 node_count=$FLAGS_node_count
 node_mem_limit=$FLAGS_node_mem
