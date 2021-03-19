@@ -20,15 +20,15 @@ DEFINE_string 'node_count' '5' 'node count' 't'
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
-echo "node_count: ${FLAGS_nodecount}"
-echo "node_cpu: ${FLAGS_nodecpu}"
-echo "node_mem: ${FLAGS_nodemem}"
+echo "node_count: ${FLAGS_node_count}"
+echo "node_cpu: ${FLAGS_node_cpu}"
+echo "node_mem: ${FLAGS_node_mem}"
 
-node_count=$FLAGS_nodecount
-node_mem_limit=$FLAGS_nodecpu
-node_mem_request=$FLAGS_nodemem
-node_cpu_limit=$FLAGS_nodecpu
-node_cpu_request=$FLAGS_nodecpu
+node_count=$FLAGS_node_count
+node_mem_limit=$FLAGS_node_mem
+node_mem_request=$FLAGS_node_mem
+node_cpu_limit=$FLAGS_node_cpu
+node_cpu_request=$FLAGS_node_cpu
 
 ############################################################################################
 # sanity checks 
