@@ -1,14 +1,34 @@
 #!/bin/bash
+source ./shflags
 
-node_count=5
-node_mem_limit="600Mi"
-node_mem_request="200Mi"
-node_cpu_limit="500m"
-node_cpu_request="100m"
 
 docker_repository="878804750492.dkr.ecr.us-east-2.amazonaws.com"
 build_bucket="builds.casperlabs.io"
 genesis_in_seconds=300
+
+
+############################################################################################
+# opts
+############################################################################################
+
+
+DEFINE_string 'node_cpu' '100m' 'node cpu request' 'c'
+DEFINE_string 'node_mem' '500Mi' 'node memory request' 'm'
+DEFINE_string 'node_count' '5' 'node count' 't'
+
+# Parse the command-line.
+FLAGS "$@" || exit 1
+eval set -- "${FLAGS_ARGV}"
+
+echo "node_count: ${FLAGS_nodecount}"
+echo "node_cpu: ${FLAGS_nodecpu}"
+echo "node_mem: ${FLAGS_nodemem}"
+
+node_count=$FLAGS_nodecount
+node_mem_limit=$FLAGS_nodecpu
+node_mem_request=$FLAGS_nodemem
+node_cpu_limit=$FLAGS_nodecpu
+node_cpu_request=$FLAGS_nodecpu
 
 ############################################################################################
 # sanity checks 
