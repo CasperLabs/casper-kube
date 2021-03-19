@@ -10,9 +10,9 @@ docker_repository="878804750492.dkr.ecr.us-east-2.amazonaws.com"
 build_bucket="builds.casperlabs.io"
 genesis_in_seconds=300
 
-######################################################
+############################################################################################
 # sanity checks 
-######################################################
+############################################################################################
 
 if ! which aws > /dev/null;
 then
@@ -32,6 +32,12 @@ then
   exit 1
 fi
 
+if ! kubectl get nodes > /dev/null;
+then
+  echo "kube auth not setup"
+  exit 1
+fi
+
 if [ ! -d "../casper-node" ];
 then
   echo "missing ../casper-node ; casper-node must be checked out in parent directory"
@@ -43,9 +49,10 @@ then
 fi
 
 
-######################################################
+############################################################################################
 # uniquely name network
-######################################################
+############################################################################################
+
 
 git_hash=`cd ../casper-node/; git rev-parse --short HEAD`
 user=`whoami`
@@ -53,18 +60,19 @@ random=`openssl rand -hex 2`
 network_name="${user}-${git_hash}-${random}"
 
 
-######################################################
+############################################################################################
 # generate casper-tool artifacts and sync to s3
-######################################################
+############################################################################################
+
 
 ./casper-tool.py create-network --genesis-in $genesis_in_seconds --hosts-file kube-hosts.yaml artifacts/$network_name
 aws s3 sync artifacts/$network_name s3://$build_bucket/networks/$network_name
 
 
 
-#####################################################################################################################
-# Create Kubernetes Resources
-#####################################################################################################################
+############################################################################################
+# create Kubernetes Resources
+############################################################################################
 
 namespace="${network_name}"
 kube_resources_yaml="./artifacts/${network_name}/kube_resources.yaml"
@@ -101,7 +109,7 @@ spec:
     - name: $node_label
       image: "${docker_repository}/casper-kube-node"
       env:
-      - name: CASPER_NODE_GIT_REV
+      - name: CASPER_NODE_GIT_HASH
         value: "$git_hash"
       - name: CASPER_NODE_INDEX
         value: "$zero_pad_index"
@@ -163,9 +171,9 @@ spec:
 EOF
 
 
-#####################################################################################################################
-# Apply Kubernetes Resources
-#####################################################################################################################
+############################################################################################
+# apply Kubernetes Resources
+############################################################################################
 
 kubectl create namespace $namespace
 kubectl apply -n $namespace -f $kube_resources_yaml
