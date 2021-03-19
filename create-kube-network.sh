@@ -12,7 +12,7 @@ build_bucket="builds.casperlabs.io"
 
 
 DEFINE_string 'node_count' '5' 'node count' 't'
-DEFINE_string 'node_cpu' '100m' 'node cpu request' 'c'
+DEFINE_string 'node_cpu' '500m' 'node cpu request' 'c'
 DEFINE_string 'node_mem' '500Mi' 'node memory request' 'm'
 DEFINE_string 'genesis_in_seconds' '300' 'genesis start x seconds in the future' 'g'
 
