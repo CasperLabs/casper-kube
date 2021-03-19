@@ -21,6 +21,10 @@ DEFINE_string 'genesis_in_seconds' '300' 'genesis start x seconds in the future'
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
+echo "--------------------------------------------------"
+echo "opts"
+echo "--------------------------------------------------"
+
 echo "node_count: ${FLAGS_node_count}"
 echo "node_cpu: ${FLAGS_node_cpu}"
 echo "node_mem: ${FLAGS_node_mem}"
@@ -87,6 +91,10 @@ network_name="${user}-${git_hash}-${random}"
 # generate casper-tool artifacts and sync to s3
 ############################################################################################
 
+echo "--------------------------------------------------"
+echo "running casper-tool:"
+echo "./casper-tool.py create-network --genesis-in $genesis_in_seconds --hosts-file kube-hosts.yaml artifacts/$network_name"
+echo "--------------------------------------------------"
 
 ./casper-tool.py create-network --genesis-in $genesis_in_seconds --hosts-file kube-hosts.yaml artifacts/$network_name
 aws s3 sync artifacts/$network_name s3://$build_bucket/networks/$network_name
@@ -100,9 +108,9 @@ aws s3 sync artifacts/$network_name s3://$build_bucket/networks/$network_name
 namespace="${network_name}"
 kube_resources_yaml="./artifacts/${network_name}/kube_resources.yaml"
 
-echo "------------------------------------------------"
-echo "Creating network in namespace $namespace"
-echo "------------------------------------------------"
+echo "--------------------------------------------------"
+echo "Creating network in kube namespace $namespace"
+echo "--------------------------------------------------"
 echo ""
 echo "Network Name: $network_name"
 echo "Build git rev: $git_hash"
