@@ -133,6 +133,20 @@ cat << EOF >> $kube_resources_yaml
 #
 
 ---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: $node_label-pv-claim
+spec:
+  storageClassName: gp2
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+      
+---
 kind: Pod
 apiVersion: v1
 metadata:
@@ -161,7 +175,13 @@ spec:
         requests:
           cpu: "$node_cpu_request"
           memory: "$node_mem_request"
-
+      volumeMounts:
+      - mountPath: "/storage"
+        name: $node_label-pd
+  volumes:
+    - name: $node_label-pd
+      persistentVolumeClaim:
+        claimName: $node_label-pv-claim
 
 ---
 kind: Service
@@ -185,19 +205,6 @@ spec:
       port: 34553
       targetPort: 34553   
 
----
-
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: $node_label-pv-claim
-spec:
-  storageClassName: gp2
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
 
 EOF
 
