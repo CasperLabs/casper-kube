@@ -21,6 +21,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
 RUN apt -y install python3-pip pipenv
 RUN pip3 install pipx
+RUN pipenv --python /usr/bin/python3.9
 
 #zsh
 RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v1.1.1/zsh-in-docker.sh)" -- \
@@ -29,10 +30,13 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
 RUN usermod --shell /bin/zsh root
 
 
+WORKDIR /root
+RUN curl https://raw.githubusercontent.com/CasperLabs/stests/dev/installer | bash
+RUN cd /root/casperlabs/stests
+RUN pipenv install 
 
-RUN mkdir /casper-node
-
+WORKDIR /root/casperlabs/stests
 COPY init.sh /init.sh
 
-WORKDIR /casper-node
+
 CMD /init.sh
