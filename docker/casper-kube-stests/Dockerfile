@@ -11,7 +11,7 @@ RUN apt -y install software-properties-common
 RUN add-apt-repository -y ppa:deadsnakes/ppa
 
 RUN apt update
-RUN apt -y install iputils-ping telnet curl strace htop vim git lsof awscli redis
+RUN apt -y install iputils-ping telnet curl strace htop vim git lsof awscli redis supervisor
 RUN apt -y install wget
 RUN apt -y install python3.9
 RUN rm -rf /var/lib/{apt,dpkg,cache,log}/
