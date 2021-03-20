@@ -17,6 +17,7 @@ RUN rm -rf /var/lib/{apt,dpkg,cache,log}/
 #set python3.9 as default
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
 RUN apt -y install python3-pip pipenv
 RUN pip3 install pipx
