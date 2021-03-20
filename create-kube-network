@@ -245,10 +245,26 @@ spec:
     env:
     - name: CASPER_NODE_GIT_HASH
       value: "$git_hash"
-    name: casper-network-util
+    name: casper-util
   restartPolicy: Always
 EOF
 
+cat << EOF >> $kube_resources_yaml
+
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: casper-stests
+spec:
+  containers:
+  - image: "${docker_repository}/casper-kube-stests"
+    env:
+    - name: CASPER_NODE_GIT_HASH
+      value: "$git_hash"
+    name: casper-stests
+  restartPolicy: Always
+EOF
 
 ############################################################################################
 # apply Kubernetes Resources
