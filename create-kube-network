@@ -6,6 +6,12 @@ docker_repository="878804750492.dkr.ecr.us-east-2.amazonaws.com"
 build_bucket="builds.casperlabs.io"
 
 
+#./create-kube-network --node_count 10 \
+#                      --node_cpu 2 \
+#                      --node_mem 2Gi \
+#                      --node_storage 10Gi \
+#                      --genesis_in_seconds 300
+
 ############################################################################################
 # opts
 ############################################################################################
@@ -72,11 +78,20 @@ then
   echo "missing ../casper-node ; casper-node must be checked out in parent directory"
 fi
 
+if [ ! -f "../casper-node/target/release/casper-node" ];
+then
+  echo "build casper-node before running create-kube-network"
+fi
+
 if [ ! -d "../casper-node-launcher" ];
 then
   echo "missing ../casper-node-launcher ; casper-node-launcher must be checked out in parent directory"
 fi
 
+if [ ! -f "../casper-node-launcher/target/release/casper-node-launcher" ];
+then
+  echo "build casper-node-launcher before running create-kube-network"
+fi
 
 ############################################################################################
 # uniquely name network
@@ -112,11 +127,11 @@ aws s3 sync artifacts/$network_name s3://$build_bucket/networks/$network_name
 # create Kubernetes Resources
 ############################################################################################
 
-namespace="${network_name}"
+
 kube_resources_yaml="./artifacts/${network_name}/kube_resources.yaml"
 
 echo "--------------------------------------------------"
-echo "Creating network in kube namespace $namespace"
+echo "Creating network in kube namespace $network_name"
 echo "--------------------------------------------------"
 echo ""
 echo "Network Name: $network_name"
@@ -235,6 +250,6 @@ EOF
 # apply Kubernetes Resources
 ############################################################################################
 
-kubectl create namespace $namespace
-kubectl apply -n $namespace -f $kube_resources_yaml
+kubectl create namespace $network_name
+kubectl apply -n $network_name -f $kube_resources_yaml
 
