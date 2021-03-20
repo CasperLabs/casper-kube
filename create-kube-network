@@ -76,21 +76,25 @@ fi
 if [ ! -d "../casper-node" ];
 then
   echo "missing ../casper-node ; casper-node must be checked out in parent directory"
+  exit 1
 fi
 
 if [ ! -f "../casper-node/target/release/casper-node" ];
 then
   echo "build casper-node before running create-kube-network"
+  exit 1
 fi
 
 if [ ! -d "../casper-node-launcher" ];
 then
   echo "missing ../casper-node-launcher ; casper-node-launcher must be checked out in parent directory"
+  exit 1
 fi
 
 if [ ! -f "../casper-node-launcher/target/release/casper-node-launcher" ];
 then
   echo "build casper-node-launcher before running create-kube-network"
+  exit 1
 fi
 
 ############################################################################################
