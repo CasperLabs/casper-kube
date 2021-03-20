@@ -4,6 +4,8 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 
+WORKDIR /root
+
 RUN apt update
 RUN apt -y install software-properties-common
 RUN add-apt-repository -y ppa:deadsnakes/ppa
@@ -30,7 +32,7 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
 RUN usermod --shell /bin/zsh root
 
 
-WORKDIR /root
+
 RUN curl https://raw.githubusercontent.com/CasperLabs/stests/dev/installer | bash
 RUN cd /root/casperlabs/stests
 RUN pipenv install 
