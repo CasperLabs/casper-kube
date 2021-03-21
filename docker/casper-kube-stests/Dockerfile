@@ -8,7 +8,7 @@ WORKDIR /root
 
 RUN apt update
 RUN apt -y install software-properties-common
-RUN add-apt-repository -y ppa:deadsnakes/ppa
+# dev branch RUN add-apt-repository -y ppa:deadsnakes/ppa
 
 RUN apt update
 RUN apt -y install iputils-ping telnet curl strace htop vim git lsof awscli redis supervisor
@@ -16,14 +16,14 @@ RUN apt -y install wget
 RUN apt -y install python3.9
 RUN rm -rf /var/lib/{apt,dpkg,cache,log}/
 
-#set python3.9 as default
+
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2
+# dev branch RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
 RUN apt -y install python3-pip pipenv
 RUN pip3 install pipx
-RUN pipenv --python /usr/bin/python3.9
+# dev branch RUN pipenv --python /usr/bin/python3.9
 
 #zsh
 RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v1.1.1/zsh-in-docker.sh)" -- \
@@ -33,7 +33,8 @@ RUN usermod --shell /bin/zsh root
 
 
 
-RUN curl https://raw.githubusercontent.com/CasperLabs/stests/dev/installer | bash
+#RUN curl https://raw.githubusercontent.com/CasperLabs/stests/dev/installer | bash
+RUN curl https://raw.githubusercontent.com/CasperLabs/stests/master/installer | bash
 RUN cd /root/casperlabs/stests
 RUN pipenv install 
 
