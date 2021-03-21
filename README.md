@@ -6,10 +6,10 @@ Run a `casper-tool` generated network on Kubernetes using your current dev build
 
 
 
-* Request access to the cluster from SRE (AWS user added to [Cluster Auth ConfigMap](https://github.com/CasperLabs/sre/blob/master/kubernetes/clusters/test/config-map-aws-auth.yaml) and RW access to s3://builds.casperlabs.io)
+* Request access to the cluster from SRE (AWS user added to eks_test [Cluster Auth ConfigMap](https://github.com/CasperLabs/sre/blob/master/kubernetes/clusters/test/config-map-aws-auth.yaml) and RW access to s3://builds.casperlabs.io)
 * Ensure you have AWS keys setup in `~/.aws/config`
 * Install [aws-iam-authenticator](https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html)
-* Install [kubeconfig](https://github.com/CasperLabs/sre/blob/master/terraform/kubernetes/test/kubeconfig_test) at `~/.kube/config`
+* Install eks_test [kubeconfig](https://github.com/CasperLabs/sre/blob/master/terraform/kubernetes/test/kubeconfig_test) at `~/.kube/config`
 * Install [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) and [Lens](https://k8slens.dev/) 
 
 
