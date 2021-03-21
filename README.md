@@ -61,5 +61,9 @@ all:
 ```
 
 
+**View network in Lens**
 
+Navigate to `Workloads -> Pods` and selected the generated network from the Namespace dropdown menu. eg. `rob-cb1d20ad-c6ed`
+
+![Lens example](docs/readme1.png)
 
