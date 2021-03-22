@@ -67,3 +67,8 @@ Navigate to `Workloads -> Pods` and selected the generated network from the Name
 
 ![Lens example](docs/readme1.png)
 
+**View logs / Get Shell / Monitoring**
+
+Use Pod context menu (top right shelf icons)
+
+![Lens example](docs/readme2.png)
