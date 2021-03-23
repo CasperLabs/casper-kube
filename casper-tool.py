@@ -428,7 +428,7 @@ def generate_node(known_addresses, obj, nodes_path, node_version, public_address
     config["consensus"]["secret_key_path"] = os.path.join(
         "..", "keys", "secret_key.pem")
     # add faucet to the `faucet` subfolder in keys
-    config["logging"]["format"] = "json"
+    config["logging"]["format"] = "text"
     config["network"]["public_address"] = "{}:{}".format(
         public_address, NODE_PORT)
     config["network"]["bind_address"] = "0.0.0.0:{}".format(NODE_PORT)
