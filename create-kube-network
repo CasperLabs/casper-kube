@@ -281,4 +281,4 @@ echo ""
 
 echo "Kibana Logs:"
 echo ""
-echo "http://$kibana_host/app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-15m,to:now))&_a=(columns:!(message),filters:!(('\$state':(store:appState),meta:(alias:!n,disabled:!f,index:'$kibana_filebeat_index',key:kubernetes.namespace,negate:!f,params:(query:$network_name),type:phrase),query:(match_phrase:(kubernetes.namespace:$network_name)))),index:'$kibana_filebeat_index',interval:auto,query:(language:kuery,query:''),sort:!())
+echo "http://$kibana_host/app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-15m,to:now))&_a=(columns:!(message),filters:!(('\$state':(store:appState),meta:(alias:!n,disabled:!f,index:'$kibana_filebeat_index',key:kubernetes.namespace,negate:!f,params:(query:$network_name),type:phrase),query:(match_phrase:(kubernetes.namespace:$network_name)))),index:'$kibana_filebeat_index',interval:auto,query:(language:kuery,query:''),sort:!())"
