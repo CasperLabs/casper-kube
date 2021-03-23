@@ -5,6 +5,8 @@ source ./shflags
 docker_repository="878804750492.dkr.ecr.us-east-2.amazonaws.com"
 build_bucket="builds.casperlabs.io"
 
+kibana_filebeat_index="3e34af50-756c-11eb-8ed1-d9bd15ada289"
+kibana_host="kibana.test.k8s.casperlabs.io"
 
 #./create-kube-network --node_count 10 \
 #                      --node_cpu 2 \
@@ -273,3 +275,10 @@ EOF
 kubectl create namespace $network_name
 kubectl apply -n $network_name -f $kube_resources_yaml
 
+echo ""
+echo "Network creation complete."
+echo ""
+
+echo "Kibana Logs:"
+echo ""
+echo "http://$kibana_host/app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-15m,to:now))&_a=(columns:!(message),filters:!(('\$state':(store:appState),meta:(alias:!n,disabled:!f,index:'$kibana_filebeat_index',key:kubernetes.namespace,negate:!f,params:(query:$network_name),type:phrase),query:(match_phrase:(kubernetes.namespace:$network_name)))),index:'$kibana_filebeat_index',interval:auto,query:(language:kuery,query:''),sort:!())
