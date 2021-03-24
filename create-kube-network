@@ -146,7 +146,7 @@ do
         cp $node/etc/casper/keys/secret_key.pem ../stests_net/configs/$node/
 done
 
-cd ../...
+cd ../..
 
 
 ############################################################################################
