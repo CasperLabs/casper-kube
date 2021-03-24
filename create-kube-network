@@ -111,7 +111,7 @@ network_name="${user}-${git_hash}-${random}"
 
 
 ############################################################################################
-# generate casper-tool artifacts and sync to s3
+# generate casper-tool artifacts
 ############################################################################################
 
 echo "--------------------------------------------------"
@@ -120,6 +120,38 @@ echo "./casper-tool.py create-network --genesis-in $genesis_in_seconds --hosts-f
 echo "--------------------------------------------------"
 
 ./casper-tool.py create-network --genesis-in $genesis_in_seconds --hosts-file kube-hosts.yaml artifacts/$network_name
+
+
+############################################################################################
+# generate stests network artifacts
+# https://github.com/CasperLabs/stests/blob/master/docs/usage_lrt.md
+############################################################################################
+
+cd artifacts/$network_name
+
+mkdir stests_net
+mkdir stests_net/configs
+mkdir stests_net/faucet
+mkdir stests_net/bin
+
+cp staging/config/chainspec.toml stests_net/
+cp staging/config/accounts.toml stests_net/
+cp staging/bin/casper-client stests_net/bin
+
+cd ./nodes
+for node in *;
+do
+        echo $node
+        mkdir -p ../stests_net/configs/$node
+        cp $node/etc/casper/keys/secret_key.pem ../stests_net/configs/$node/
+done
+
+cd ../...
+
+
+############################################################################################
+# sync artifacts to s3
+############################################################################################
 
 echo "--------------------------------------------------"
 echo "uploading artifacts to s3"
