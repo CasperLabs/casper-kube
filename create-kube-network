@@ -136,6 +136,7 @@ mkdir stests_net/bin
 
 cp staging/config/chainspec.toml stests_net/
 cp staging/config/accounts.toml stests_net/
+cp staging/faucet/secret_key.pem stests_net/faucet
 cp staging/bin/casper-client stests_net/bin
 
 cd ./nodes
