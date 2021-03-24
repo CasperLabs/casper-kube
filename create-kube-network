@@ -296,6 +296,8 @@ spec:
     env:
     - name: CASPER_NODE_GIT_HASH
       value: "$git_hash"
+    - name: NETWORK_NAME
+      value: "$network_name"            
     name: casper-stests
   restartPolicy: Always
 EOF
