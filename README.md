@@ -85,7 +85,7 @@ Use Pod context menu (top right shelf icons)
 
 Navigate to `Namespaces` and delete the network. 
 
-All resources associated with the network (pods, volums) will be removed and the cluster will scale down.
+All resources associated with the network (pods, volumes) will be removed and the cluster will scale down.
 
 ![Delete Network](docs/readme4.png)
 
