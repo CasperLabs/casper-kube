@@ -74,3 +74,10 @@ Navigate to `Workloads -> Pods` and selected the generated network from the Name
 Use Pod context menu (top right shelf icons)
 
 ![Lens example](docs/readme2.png)
+
+** View logs in Kibana**
+
+`create-kube-network` will output a link to Kibana with logs scoped to the newly created network
+
+![Kibana Logs](docs/readme3.png)
+
