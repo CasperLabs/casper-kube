@@ -190,7 +190,6 @@ cat << EOF >> $kube_resources_yaml
 #
 
 ---
-
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -202,6 +201,28 @@ spec:
   resources:
     requests:
       storage: $node_storage
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: $node_label
+spec:
+  selector:
+    app: $node_label
+  ports:
+    - name: rest
+      protocol: TCP
+      port: 8888
+      targetPort: 8888
+    - name: rpc
+      protocol: TCP
+      port: 7777
+      targetPort: 7777
+    - name: casper-node
+      protocol: TCP
+      port: 34553
+      targetPort: 34553   
 
 ---
 kind: Pod
@@ -239,28 +260,9 @@ spec:
     - name: $node_label-pd
       persistentVolumeClaim:
         claimName: $node_label-pv-claim
-
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: $node_label
-spec:
-  selector:
-    app: $node_label
-  ports:
-    - name: rest
-      protocol: TCP
-      port: 8888
-      targetPort: 8888
-    - name: rpc
-      protocol: TCP
-      port: 7777
-      targetPort: 7777
-    - name: casper-node
-      protocol: TCP
-      port: 34553
-      targetPort: 34553   
+  securityContext:
+    capabilities:
+      add: ["NET_ADMIN"] #required to use tc
 
 
 EOF
