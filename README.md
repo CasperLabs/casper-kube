@@ -75,7 +75,7 @@ Use Pod context menu (top right shelf icons)
 
 ![Lens example](docs/readme2.png)
 
-** View logs in Kibana**
+**View logs in Kibana**
 
 `create-kube-network` will output a link to Kibana with logs scoped to the newly created network
 
