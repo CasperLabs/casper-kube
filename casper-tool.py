@@ -382,7 +382,7 @@ def create_network(
 
     for public_address in bootstrap_nodes + validator_nodes + zero_weight_nodes:
         node_path = os.path.join(nodes_path, public_address)
-        show_val("coping files to ", node_path)
+        show_val("copying files to ", node_path)
 
         # copy the bin and chain into each node's versioned fileset
         node_var_lib_casper = os.path.join(node_path, "var", "lib", "casper")
@@ -422,6 +422,10 @@ def generate_node(known_addresses, obj, nodes_path, node_version, public_address
     Path(node_config_path).mkdir(parents=True, exist_ok=True)
     config = toml.load(open(obj["config_template"]))
 
+    config["rpc_server"]["qps_limit"] = \
+    config["event_stream_server"]["qps_limit"] = \
+    config["rest_server"]["qps_limit"] = 10000
+
     if trusted_hash:
         config["node"]["trusted_hash"] = trusted_hash
 
@@ -437,9 +441,9 @@ def generate_node(known_addresses, obj, nodes_path, node_version, public_address
     # Setup for volume operation.
     storage_path = "/storage/{}".format(public_address)
     config["storage"]["path"] = storage_path
-    config["storage"]["path"] = storage_path
     config["network"]["gossip_interval"] = 120000
-    config["consensus"]["unit_hashes_folder"] = storage_path
+    config["consensus"]["highway"]["unit_hashes_folder"] = storage_path
+    # config["consensus"]["unit_hashes_folder"] = storage_path
     toml.dump(config, open(os.path.join(node_config_path, "config.toml", ), "w"))
 
 
@@ -459,9 +463,8 @@ def create_chainspec(template, network_name, genesis_in):
     show_val("Genesis timestamp", "{} (in {} seconds)".format(
         genesis_timestamp, genesis_in))
     chainspec["network"]["name"] = network_name
-    chainspec["network"]["timestamp"] = genesis_timestamp
-    chainspec["highway"]["minimum_round_exponent"] = 13
-    chainspec["highway"]["maximum_round_exponent"] = 16
+    chainspec["protocol"]["activation_point"] = genesis_timestamp
+
     chainspec["core"]["unbonding_delay"] = 7 # normally 14
     chainspec["core"]["auction_delay"] = 1 # normally 3
     chainspec["core"]["era_duration"] = "15min" # normally 30min
