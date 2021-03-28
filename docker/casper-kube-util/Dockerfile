@@ -5,7 +5,7 @@ ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 
 RUN apt update
-RUN apt -y install iputils-ping telnet curl strace htop vim git lsof awscli
+RUN apt -y install iputils-ping telnet curl strace htop vim git lsof awscli net-tools
 RUN apt -y install wget
 
 RUN rm -rf /var/lib/{apt,dpkg,cache,log}/
