@@ -442,7 +442,7 @@ def generate_node(known_addresses, obj, nodes_path, node_version, public_address
     storage_path = "/storage/{}".format(public_address)
     config["storage"]["path"] = storage_path
     config["network"]["gossip_interval"] = 120000
-    config["consensus"]["highway"]["unit_hashes_folder"] = storage_path
+    config["consensus"]["unit_hashes_folder"] = storage_path
     # config["consensus"]["unit_hashes_folder"] = storage_path
     toml.dump(config, open(os.path.join(node_config_path, "config.toml", ), "w"))
 
