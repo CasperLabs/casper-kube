@@ -17,11 +17,11 @@ then
 fi
 
 #ensure the bootstrap node has started, before bringing up our node
-if [ ! $CASPER_NODE_INDEX == "001" ]; 
-then 
-    echo "sleeping for 30 seconds to ensure bootstrap node has started"
-    sleep 30
-fi
+#if [ ! $CASPER_NODE_INDEX == "001" ]; 
+#then 
+#    echo "sleeping for 30 seconds to ensure bootstrap node has started"
+#    sleep 30
+#fi
 
 #config
 aws s3 sync s3://$bucket_name/networks/$NETWORK_NAME/nodes/casper-node-$CASPER_NODE_INDEX/etc/ /etc/
