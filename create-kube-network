@@ -256,13 +256,14 @@ spec:
       volumeMounts:
       - mountPath: "/storage"
         name: $node_label-pd
+      securityContext:
+        capabilities:
+          add:
+            - NET_ADMIN
   volumes:
     - name: $node_label-pd
       persistentVolumeClaim:
         claimName: $node_label-pv-claim
-  securityContext:
-    capabilities:
-      add: ["NET_ADMIN"] #required to use tc
 
 
 EOF
