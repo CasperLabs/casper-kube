@@ -90,10 +90,12 @@ All resources associated with the network (pods, volumes) will be removed and th
 ![Delete Network](docs/readme4.png)
 
 
-#### Chaos
+
+
+### Chaos
 
 Nodes are launched on Kubernetes workers running on AWS Spot Instances (providing ~90% cost savings). 
 
 In the event a Spot Termination occurs (workers will typically stay up for weeks at a time) the terminated `casper-node` Pod will be rescheduled on another worker node. 
 
-The `/storage` volume is persistent and survives the reschedule.
+The `/storage` volume is persistent and survives the reschedule. 
