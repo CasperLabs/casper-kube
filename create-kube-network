@@ -225,45 +225,55 @@ spec:
       targetPort: 34553   
 
 ---
-kind: Pod
-apiVersion: v1
+kind: Deployment
+apiVersion: apps/v1
 metadata:
-  name: $node_label
+  name: "${node_label}"
   labels:
     app: $node_label
 spec:
-  containers:
-    - name: $node_label
-      image: "${docker_repository}/casper-kube-node"
-      env:
-      - name: CASPER_NODE_GIT_HASH
-        value: "$git_hash"
-      - name: CASPER_NODE_INDEX
-        value: "$zero_pad_index"
-      - name: NETWORK_NAME
-        value: "$network_name"        
-      - name: RUST_LOG
-        value: info
-      - name: RUST_BACKTRACE
-        value: "1"
-      resources:
-        limits:
-          cpu: "$node_cpu_limit"
-          memory: "$node_mem_limit"
-        requests:
-          cpu: "$node_cpu_request"
-          memory: "$node_mem_request"
-      volumeMounts:
-      - mountPath: "/storage"
-        name: $node_label-pd
-      securityContext:
-        capabilities:
-          add:
-            - NET_ADMIN
-  volumes:
-    - name: $node_label-pd
-      persistentVolumeClaim:
-        claimName: $node_label-pv-claim
+  replicas: 1
+  selector:
+    matchLabels:
+      app: $node_label
+  template:
+    metadata:
+      labels:
+       app:  $node_label
+    spec:
+      containers:
+        - name: $node_label
+
+          image: "${docker_repository}/casper-kube-node"
+          env:
+          - name: CASPER_NODE_GIT_HASH
+            value: "$git_hash"
+          - name: CASPER_NODE_INDEX
+            value: "$zero_pad_index"
+          - name: NETWORK_NAME
+            value: "$network_name"
+          - name: RUST_LOG
+            value: info
+          - name: RUST_BACKTRACE
+            value: "1"
+          resources:
+            limits:
+              cpu: "$node_cpu_limit"
+              memory: "$node_mem_limit"
+            requests:
+              cpu: "$node_cpu_request"
+              memory: "$node_mem_request"
+          volumeMounts:
+          - mountPath: "/storage"
+            name: $node_label-pv
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+      volumes:
+        - name: $node_label-pv
+          persistentVolumeClaim:
+            claimName: $node_label-pv-claim
 
 
 EOF
