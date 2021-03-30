@@ -94,7 +94,7 @@ All resources associated with the network (pods, volumes) will be removed and th
 
 ### Chaos
 
-Nodes are launched on Kubernetes workers running on AWS Spot Instances (providing ~90% cost savings). 
+Nodes are launched on Kubernetes workers running on AWS Spot Instances (leveraging ~90% cost savings). 
 
 In the event a Spot Termination occurs (workers will typically stay up for weeks at a time) the terminated `casper-node` Pod will be rescheduled on another worker node. 
 
