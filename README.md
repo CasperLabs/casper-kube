@@ -1,7 +1,6 @@
 # casper-kube
 
-Run a [casper-tool](https://github.com/dwerner/casper-test-ansible/blob/main/casper-tool.py) generated network on Kubernetes using your current dev build.
-
+Run a [casper-tool](https://github.com/dwerner/casper-test-ansible/blob/main/casper-tool.py) generated network on Kubernetes using your current dev build on a network of arbitary size (Node Count) and resources (CPU/Mem/Storage)
 
 
 ### Requirements
