@@ -56,11 +56,20 @@ all:
 
 
 ```
+cp kube_hosts_examples/kube-hosts-5.yaml ./kube-hosts.yaml
 ./create-kube-network --node_count 5 \
                       --node_cpu 2 \
                       --node_mem 2Gi \
                       --node_storage 10Gi \
                       --genesis_in_seconds 300
+
+cp kube_hosts_examples/kube-hosts-50.yaml ./kube-hosts.yaml
+./create-kube-network --node_count 50 \
+                      --node_cpu 1 \
+                      --node_mem 500Mi \
+                      --node_storage 1Gi \
+                      --genesis_in_seconds 900
+
 ```
 
 

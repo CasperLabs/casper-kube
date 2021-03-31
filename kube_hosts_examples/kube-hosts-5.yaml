@@ -1,0 +1,13 @@
+all:
+  children:
+    bootstrap:
+      hosts:
+        casper-node-001: ''
+    validators:
+      hosts:
+        casper-node-002: ''
+        casper-node-003: ''
+    zero_weight:
+      hosts:
+        casper-node-004: ''
+        casper-node-005: ''
