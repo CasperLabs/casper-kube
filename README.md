@@ -50,7 +50,7 @@ all:
 
 **Create a network**
 
-* `casper-node` & `casper-node-launcher` binaries must be built before running `create-kube-network` 
+* `casper-node` & `casper-node-launcher` binaries (release) must be built before running `create-kube-network` 
 * `node_count option` must match the number of nodes defined in kube-hosts.yaml
 * `genesis_in_seconds option` must be longer than the time taken to spin up the network to a running state. (A higher node count will require a higher delay until genesis)
 
