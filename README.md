@@ -56,6 +56,7 @@ all:
 
 
 ```
+# 5 node network
 cp kube_hosts_examples/kube-hosts-5.yaml ./kube-hosts.yaml
 ./create-kube-network --node_count 5 \
                       --node_cpu 2 \
@@ -63,6 +64,7 @@ cp kube_hosts_examples/kube-hosts-5.yaml ./kube-hosts.yaml
                       --node_storage 10Gi \
                       --genesis_in_seconds 300
 
+# 50 node network
 cp kube_hosts_examples/kube-hosts-50.yaml ./kube-hosts.yaml
 ./create-kube-network --node_count 50 \
                       --node_cpu 1 \
