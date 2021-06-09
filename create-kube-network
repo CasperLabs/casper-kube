@@ -1,14 +1,14 @@
 #!/bin/bash
 source ./shflags
 
-
 docker_repository="878804750492.dkr.ecr.us-east-2.amazonaws.com"
 build_bucket="builds.casperlabs.io"
 
 kibana_filebeat_index="32f407c0-9755-11eb-9976-1debcb3b57c8"
 kibana_host="kibana.test.k8s.casperlabs.io"
 
-#./create-kube-network --node_count 10 \
+# ./create-kube-network --network_name_prefix "$(whoami)"
+#                      --node_count 10 \
 #                      --node_cpu 2 \
 #                      --node_mem 2Gi \
 #                      --node_storage 10Gi \
@@ -19,6 +19,7 @@ kibana_host="kibana.test.k8s.casperlabs.io"
 ############################################################################################
 
 
+DEFINE_string 'network_name_prefix' '' 'network_name_prefix' 'n'
 DEFINE_string 'node_count' '5' 'node count' 't'
 DEFINE_string 'node_cpu' '500m' 'node cpu request' 'c'
 DEFINE_string 'node_mem' '500Mi' 'node memory request' 'm'
@@ -33,12 +34,14 @@ echo "--------------------------------------------------"
 echo "opts"
 echo "--------------------------------------------------"
 
+echo "network_name_prefix: ${FLAGS_network_name_prefix}"
 echo "node_count: ${FLAGS_node_count}"
 echo "node_cpu: ${FLAGS_node_cpu}"
 echo "node_mem: ${FLAGS_node_mem}"
 echo "node_storage: ${FLAGS_node_storage}"
 echo "genesis_in_seconds: ${FLAGS_genesis_in_seconds}"
 
+network_name_prefix=$FLAGS_network_name_prefix
 node_count=$FLAGS_node_count
 node_mem_limit=$FLAGS_node_mem
 node_mem_request=$FLAGS_node_mem
@@ -48,7 +51,7 @@ node_storage=$FLAGS_node_storage
 genesis_in_seconds=$FLAGS_genesis_in_seconds
 
 ############################################################################################
-# sanity checks 
+# sanity checks
 ############################################################################################
 
 if ! which aws > /dev/null;
@@ -72,6 +75,12 @@ fi
 if ! kubectl get nodes > /dev/null;
 then
   echo "kube auth not setup"
+  exit 1
+fi
+
+if [[ "$(kubectl config current-context)" != "eks_test" ]]; then
+  >&2 echo "The eks_test context was not detected"
+  >&2 echo "Aborting attempt to create the network..."
   exit 1
 fi
 
@@ -105,10 +114,17 @@ fi
 
 
 git_hash=`cd ../casper-node/; git rev-parse --short HEAD`
-user=`whoami`
+if [[ -z "${network_name_prefix}" ]]; then
+  network_name_prefix=`whoami`
+fi
 random=`openssl rand -hex 2`
-network_name="${user}-${git_hash}-${random}"
+network_name="${network_name_prefix}-${git_hash}-${random}"
 
+if [[ "$( kubectl get namespaces | grep -c "${network_name}")" -gt 0 ]]; then
+  >&2 echo "There is already a namespace for the given network_name_prefix"
+  >&2 echo "Aborting attempt to create the network..."
+  exit 1
+fi
 
 ############################################################################################
 # generate casper-tool artifacts
@@ -222,7 +238,7 @@ spec:
     - name: casper-node
       protocol: TCP
       port: 34553
-      targetPort: 34553   
+      targetPort: 34553
 
 ---
 kind: Deployment
@@ -311,7 +327,7 @@ spec:
     - name: CASPER_NODE_GIT_HASH
       value: "$git_hash"
     - name: NETWORK_NAME
-      value: "$network_name"            
+      value: "$network_name"
     name: casper-stests
   restartPolicy: Always
 EOF
