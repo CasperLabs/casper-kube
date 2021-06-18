@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "casper-kube.fullname" . }}
+  labels:
+    {{- include "casper-kube.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  serviceName: {{ default "casper-node" .Values.serviceName }}
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ include "casper-kube.fullname" . }}
+        annotations:
+          volume.beta.kubernetes.io/storage-class: {{ default "gp2" .Values.volumeStorageClass }}
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.volumeClaimSize | default "1Gi" }}
+  selector:
+    matchLabels:
+      {{- include "casper-kube.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "casper-kube.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "casper-kube.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          command: ["/init.sh"]
+          volumeMounts:
+            - name: {{ include "casper-kube.fullname" . }}
+              mountPath: "/storage"
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 34553
+            - containerPort: 8888
+            - containerPort: 7777
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: CASPER_NODE_GIT_HASH
+              value: {{ .Values.gitHash | quote }}
+            - name: CASPER_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NETWORK_NAME
+              value: {{ .Values.network_name | quote }}
+            - name: RUST_LOG
+              value: {{ .Values.logLevel | quote }}
+            - name: RUST_BACKTRACE
+              value: {{ .Values.backtrace | quote }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

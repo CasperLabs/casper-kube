@@ -350,7 +350,7 @@ def create_network(
                       node_version, public_address, None)
         validator_keys.append(account)
 
-    initial_known_nodes = bootstrap_nodes + validator_nodes
+    initial_known_nodes = bootstrap_nodes
 
     for public_address in validator_nodes:
         show_val("validator node", public_address)

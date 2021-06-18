@@ -1,0 +1,105 @@
+# The current architectural approach does not support more than
+replicaCount: 5
+
+image:
+  repository: 878804750492.dkr.ecr.us-east-2.amazonaws.com/casper-kube-node
+  pullPolicy: Always
+  tag: latest
+
+logLevel: info
+backtrace: 1
+network_name: ""
+git_hash: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# Fix this later
+# volumeStorageClass: gp2-immediate
+volumeStorageClass: gp2
+volumeClaimSize: 1Gi
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext:
+  capabilities:
+    add:
+      - NET_ADMIN
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  ports:
+    - name: casper-node
+      protocol: TCP
+      podPort: 34553
+      servicePort: 34553
+    - name: rest
+      podPort: 8888
+      protocol: TCP
+      servicePort: 8888
+    - name: rpc
+      protocol: TCP
+      podPort: 7777
+      servicePort: 7777
+
+resources:
+  limits:
+    cpu: 4
+    memory: 8Gi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+stests:
+  create: true
+  image:
+    repository: 878804750492.dkr.ecr.us-east-2.amazonaws.com/casper-kube-stests
+    pullPolicy: Always
+    tag: latest
+  resources:
+    limits:
+      cpu: 2
+      memory: 2Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+util:
+  create: true
+  image:
+    repository: 878804750492.dkr.ecr.us-east-2.amazonaws.com/casper-kube-util
+    pullPolicy: Always
+    tag: latest
+  resources:
+    limits:
+      cpu: 2
+      memory: 2Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
