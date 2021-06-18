@@ -11,6 +11,7 @@ Kubernetes will autoscale the cluster to meet the resources requested.
 * Install [aws-iam-authenticator](https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html)
 * Install eks_test [kubeconfig](https://github.com/CasperLabs/sre/blob/master/terraform/kubernetes/test/kubeconfig_test) at `~/.kube/config`
 * Install [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) and [Lens](https://k8slens.dev/)
+* Install [dasel](https://daseldocs.tomwright.me/installation) for building the `kube-hosts.yaml` file
 
 
 see [Confluence Kubernetes docs](https://casperlabs.atlassian.net/wiki/spaces/OPS/pages/1034584065/Kubernetes)
@@ -63,26 +64,26 @@ popd
 * `node_count option` must match the number of nodes defined in kube-hosts.yaml
 * `genesis_in_seconds option` must be longer than the time taken to spin up the network to a running state. (A higher node count will require a higher delay until genesis)
 
-```
+```bash
 # 5 node network
-cp kube_hosts_examples/kube-hosts-5.yaml ./kube-hosts.yaml
-./create-kube-network --network_name_prefix "mynet" \
-                      --node_count 5 \
-                      --node_cpu 2 \
-                      --node_mem 2Gi \
-                      --node_storage 10Gi \
-                      --genesis_in_seconds 300
+./create-kube-network \
+  --network_name_prefix "mynet" \
+  --node_count 5 \
+  --node_cpu 2 \
+  --node_mem 2Gi \
+  --node_storage 10Gi \
+  --genesis_in_seconds 300
 
 # 50 node network
-cp kube_hosts_examples/kube-hosts-50.yaml ./kube-hosts.yaml
-./create-kube-network --network_name_prefix "mynet" \
-                      --node_count 50 \
-                      --node_cpu 1 \
-                      --node_mem 500Mi \
-                      --node_storage 1Gi \
-                      --genesis_in_seconds 900
+./create-kube-network \
+  --network_name_prefix "mynet" \
+  --node_count 50 \
+  --bootstrap_node_count 3 \
+  --node_cpu 1 \
+  --node_mem 500Mi \
+  --node_storage 1Gi \
+  --genesis_in_seconds 900
 ```
-
 
 **View network in Lens**
 
