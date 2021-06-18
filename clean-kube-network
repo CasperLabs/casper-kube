@@ -1,0 +1,110 @@
+#!/bin/bash
+# shellcheck disable=SC1091
+source ./shflags
+
+build_bucket="builds.casperlabs.io"
+
+# ./clean-kube-network --network_name_prefix "$(whoami)"
+
+############################################################################################
+# opts
+############################################################################################
+
+DEFINE_string 'network_name_prefix' '' 'network_name_prefix' 'n'
+
+# Parse the command-line.
+FLAGS "$@" || exit 1
+eval set -- "${FLAGS_ARGV}"
+
+echo "--------------------------------------------------"
+echo "opts"
+echo "--------------------------------------------------"
+
+echo "network_name_prefix: ${FLAGS_network_name_prefix}"
+
+network_name_prefix=$FLAGS_network_name_prefix
+
+############################################################################################
+# sanity checks
+############################################################################################
+
+if ! which aws > /dev/null;
+then
+  echo "awscli utilities not installed"
+  exit 1
+fi
+
+if ! aws sts get-caller-identity > /dev/null;
+then
+  echo "aws credentials not setup"
+  exit 1
+ fi
+
+if ! which kubectl > /dev/null;
+then
+  echo "kubectl not installed"
+  exit 1
+fi
+
+if ! kubectl get nodes > /dev/null;
+then
+  echo "kube auth not setup"
+  exit 1
+fi
+
+if [[ "$(kubectl config current-context)" != "eks_test" ]]; then
+  >&2 echo "The eks_test context is not the current context"
+  >&2 echo "Aborting attempt to remove the namespace..."
+  exit 1
+fi
+
+############################################################################################
+# setting network name
+############################################################################################
+
+if [[ -z "${network_name_prefix}" ]]; then
+  network_name_prefix="$(whoami)"
+fi
+
+if [[ "$(kubectl get namespaces | grep -c "${network_name_prefix}\-")" -gt 1 ]]; then
+  >&2 echo "There are more than one namespace for the given network_name_prefix"
+  >&2 echo "Aborting attempt to remove the resources..."
+  exit 1
+else
+  network_name="$(kubectl get namespaces | grep "${network_name_prefix}\-" | cut -d' ' -f1)"
+fi
+
+############################################################################################
+# remove k8s resources
+############################################################################################
+
+echo "--------------------------------------------------"
+echo "Removing kubernetes namespace ${network_name}"
+echo "--------------------------------------------------"
+
+kubectl delete namespace "${network_name}"
+
+############################################################################################
+# remove configuration files in artifacts directory
+############################################################################################
+
+echo "--------------------------------------------------"
+echo "cleaning local artifacts directory"
+echo "--------------------------------------------------"
+
+if [[ -n "${network_name}" ]] && [[ -d "${PWD}/artifacts/${network_name}" ]]; then
+  # shellcheck disable=SC2086
+  rm -rf "${PWD}/artifacts/${network_name}"/*
+fi
+
+############################################################################################
+# remove artifacts from s3
+############################################################################################
+
+echo "--------------------------------------------------"
+echo "cleaning remote s3 artifacts"
+echo "--------------------------------------------------"
+
+if [[ -n "${network_name}" ]]; then
+  aws s3 rm --recursive "s3://${build_bucket}/networks/${network_name}"
+fi
