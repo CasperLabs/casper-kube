@@ -92,8 +92,10 @@ echo "--------------------------------------------------"
 echo "cleaning local artifacts directory"
 echo "--------------------------------------------------"
 
-# shellcheck disable=SC2086
-rm -rf ./artifacts/${network_name}/*
+if [[ -n "${network_name}" ]] && [[ -d "${PWD}/artifacts/${network_name}" ]]; then
+  # shellcheck disable=SC2086
+  rm -rf "${PWD}/artifacts/${network_name}"/*
+fi
 
 ############################################################################################
 # remove artifacts from s3

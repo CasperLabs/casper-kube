@@ -55,6 +55,7 @@ cargo build --release
 popd
 
 pushd casper-node || >&2 echo "casper-node dir expected"
+cargo build --release --package casper-client
 cargo build --release --package casper-node
 popd
 ```
@@ -65,7 +66,7 @@ popd
 ```
 # 5 node network
 cp kube_hosts_examples/kube-hosts-5.yaml ./kube-hosts.yaml
-./create-kube-network --network_name_prefix "$(aws iam get-user | jq -r .User.UserName)" \
+./create-kube-network --network_name_prefix "mynet" \
                       --node_count 5 \
                       --node_cpu 2 \
                       --node_mem 2Gi \
@@ -74,7 +75,7 @@ cp kube_hosts_examples/kube-hosts-5.yaml ./kube-hosts.yaml
 
 # 50 node network
 cp kube_hosts_examples/kube-hosts-50.yaml ./kube-hosts.yaml
-./create-kube-network --network_name_prefix "$(aws iam get-user | jq -r .User.UserName)" \
+./create-kube-network --network_name_prefix "mynet" \
                       --node_count 50 \
                       --node_cpu 1 \
                       --node_mem 500Mi \
@@ -112,7 +113,7 @@ All resources associated with the network (pods, volumes) will be removed and th
 Alternatively, the following script will clean up the namespace and network artifacts.
 
 ```bash
-./clean-kube-network --network_name_prefix "$(aws iam get-user | jq -r .User.UserName)"
+./clean-kube-network --network_name_prefix "mynet"
 ```
 
 ### Chaos
