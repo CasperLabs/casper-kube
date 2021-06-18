@@ -1,0 +1,12 @@
+replicaCount: 1
+persistence:
+  enabled: true
+  storageClass: "-"
+  accessMode: ReadWriteOnce
+  size: 1100Mi
+storageClass:
+  create: true
+  defaultClass: false
+  name: nfs
+  allowVolumeExpansion: true
+  reclaimPolicy: Retain

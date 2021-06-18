@@ -1,30 +1,25 @@
-#!/bin/bash
-source ./shflags
+#!/usr/bin/env bash
 
-docker_repository="878804750492.dkr.ecr.us-east-2.amazonaws.com"
-build_bucket="builds.casperlabs.io"
+# shellcheck disable=1091
+source "scripts/shflags"
 
-kibana_filebeat_index="32f407c0-9755-11eb-9976-1debcb3b57c8"
-kibana_host="kibana.test.k8s.casperlabs.io"
+# shellcheck disable=2034
+HELM_CHART_NAME=casper-kube
 
-# ./create-kube-network --network_name_prefix "$(whoami)"
-#                      --node_count 10 \
-#                      --node_cpu 2 \
-#                      --node_mem 2Gi \
-#                      --node_storage 10Gi \
-#                      --genesis_in_seconds 300
-
-############################################################################################
-# opts
-############################################################################################
-
-
-DEFINE_string 'network_name_prefix' '' 'network_name_prefix' 'n'
-DEFINE_string 'node_count' '5' 'node count' 't'
-DEFINE_string 'node_cpu' '500m' 'node cpu request' 'c'
-DEFINE_string 'node_mem' '500Mi' 'node memory request' 'm'
-DEFINE_string 'node_storage' '1Gi' 'node storage volume size' 's'
-DEFINE_string 'genesis_in_seconds' '300' 'genesis start x seconds in the future' 'g'
+DEFINE_string 'bootstrap_node_count' '1' 'bootstrap node count' ''
+DEFINE_string 'development_mode' 'true' 'whether to upload the network artifacts to k8s from local' ''
+DEFINE_string 'genesis_in_seconds' '300' 'genesis start x seconds in the future' ''
+DEFINE_string 'image_tag' 'latest' 'image_tag' ''
+DEFINE_string 'network_name_prefix' '' 'network_name_prefix' ''
+DEFINE_string 'node_name_prefix' 'casper-node' 'node name' ''
+DEFINE_string 'node_count' '5' 'node count' ''
+DEFINE_string 'node_cpu' '500m' 'node cpu request' ''
+DEFINE_string 'node_mem' '500Mi' 'node memory request' ''
+DEFINE_string 'node_storage_capacity' '1Gi' 'node storage volume size' ''
+DEFINE_string 'rwo_storage_class' 'gp2' 'name of the readwriteone storage class to use' ''
+DEFINE_string 'rwm_storage_class' 'nfs' 'name of the readwritemany storage class to use' ''
+DEFINE_string 'validator_node_count' '1' 'validator node count' ''
+DEFINE_string 'zero_weight_node_count' '1' 'zero weight node count' ''
 
 # Parse the command-line.
 FLAGS "$@" || exit 1
@@ -34,316 +29,90 @@ echo "--------------------------------------------------"
 echo "opts"
 echo "--------------------------------------------------"
 
-echo "network_name_prefix: ${FLAGS_network_name_prefix}"
-echo "node_count: ${FLAGS_node_count}"
-echo "node_cpu: ${FLAGS_node_cpu}"
-echo "node_mem: ${FLAGS_node_mem}"
-echo "node_storage: ${FLAGS_node_storage}"
-echo "genesis_in_seconds: ${FLAGS_genesis_in_seconds}"
-
-network_name_prefix=$FLAGS_network_name_prefix
-node_count=$FLAGS_node_count
-node_mem_limit=$FLAGS_node_mem
-node_mem_request=$FLAGS_node_mem
-node_cpu_limit=$FLAGS_node_cpu
-node_cpu_request=$FLAGS_node_cpu
-node_storage=$FLAGS_node_storage
-genesis_in_seconds=$FLAGS_genesis_in_seconds
-
-############################################################################################
-# sanity checks
-############################################################################################
-
-if ! which aws > /dev/null;
-then
-  echo "awscli utilities not installed"
-  exit 1
+BOOTSTRAP_NODE_COUNT=$FLAGS_bootstrap_node_count
+DEVELOPMENT_MODE=${FLAGS_development_mode}
+GENESIS_IN_SECONDS=$FLAGS_genesis_in_seconds
+IMAGE_TAG=$FLAGS_image_tag
+if [[ -z "${FLAGS_network_name_prefix}" ]]; then
+  NETWORK_NAME_PREFIX="$(whoami)"
+else
+  NETWORK_NAME_PREFIX="${FLAGS_network_name_prefix}"
 fi
+NODE_NAME_PREFIX=$FLAGS_node_name_prefix
+NODE_COUNT=$FLAGS_node_count
+NODE_MEM_LIMIT=$FLAGS_node_mem
+NODE_CPU_LIMIT=$FLAGS_node_cpu
+NODE_STORAGE_CAPACITY=$FLAGS_node_storage_capacity
+RWO_STORAGE_CLASS=$FLAGS_rwo_storage_class
+RWM_STORAGE_CLASS=$FLAGS_rwm_storage_class
+VALIDATOR_NODE_COUNT=$FLAGS_validator_node_count
+ZERO_WEIGHT_NODE_COUNT=$FLAGS_zero_weight_node_count
 
-if ! aws sts get-caller-identity > /dev/null;
-then
-  echo "aws credentials not setup"
-  exit 1
- fi
+echo "BOOTSTRAP_NODE_COUNT: ${BOOTSTRAP_NODE_COUNT}"
+echo "DEVELOPMENT_MODE: ${DEVELOPMENT_MODE}"
+echo "GENESIS_IN_SECONDS: ${GENESIS_IN_SECONDS}"
+echo "IMAGE_TAG: ${IMAGE_TAG}"
+echo "NETWORK_NAME_PREFIX: ${NETWORK_NAME_PREFIX}"
+echo "NODE_NAME_PREFIX: ${NODE_NAME_PREFIX}"
+echo "NODE_COUNT: ${NODE_COUNT}"
+echo "NODE_MEM_LIMIT: ${NODE_MEM_LIMIT}"
+echo "NODE_CPU_LIMIT: ${NODE_CPU_LIMIT}"
+echo "NODE_STORAGE_CAPACITY: ${NODE_STORAGE_CAPACITY}"
+echo "RWO_STORAGE_CLASS: ${RWO_STORAGE_CLASS}"
+echo "RWM_STORAGE_CLASS: ${RWM_STORAGE_CLASS}"
+echo "VALIDATOR_NODE_COUNT: ${VALIDATOR_NODE_COUNT}"
+echo "ZERO_WEIGHT_NODE_COUNT ${ZERO_WEIGHT_NODE_COUNT}"
 
-if ! which kubectl > /dev/null;
-then
-  echo "kubectl not installed"
-  exit 1
-fi
+sleep 3s
 
-if ! kubectl get nodes > /dev/null;
-then
-  echo "kube auth not setup"
-  exit 1
-fi
+# Validate all required variables and tools are present
+source "${PWD}"/scripts/validations.sh \
+  "${BOOTSTRAP_NODE_COUNT}" \
+  "${DEVELOPMENT_MODE}" \
+  "${GENESIS_IN_SECONDS}" \
+  "${IMAGE_TAG}" \
+  "${NETWORK_NAME_PREFIX}" \
+  "${NODE_NAME_PREFIX}" \
+  "${NODE_COUNT}" \
+  "${NODE_MEM_LIMIT}" \
+  "${NODE_CPU_LIMIT}" \
+  "${NODE_STORAGE_CAPACITY}" \
+  "${RWO_STORAGE_CLASS}" \
+  "${RWM_STORAGE_CLASS}"
 
-if [[ "$(kubectl config current-context)" != "eks_test" ]]; then
-  >&2 echo "The eks_test context was not detected"
-  >&2 echo "Aborting attempt to create the network..."
-  exit 1
-fi
+# Create name for the network
+source "${PWD}"/scripts/set_network_name.sh \
+  "${NETWORK_NAME_PREFIX}"
 
-if [ ! -d "../casper-node" ];
-then
-  echo "missing ../casper-node ; casper-node must be checked out in parent directory"
-  exit 1
-fi
+# Generate hosts file locally
+source "${PWD}"/scripts/generate_hosts_file.sh \
+  "${NODE_NAME_PREFIX}" \
+  "${NODE_COUNT}" \
+  "${BOOTSTRAP_NODE_COUNT}" \
+  "${VALIDATOR_NODE_COUNT}" \
+  "${ZERO_WEIGHT_NODE_COUNT}"
 
-if [ ! -f "../casper-node/target/release/casper-node" ];
-then
-  echo "build casper-node before running create-kube-network"
-  exit 1
-fi
+# Generate network artifacts locally
+source "${PWD}"/scripts/generate_network_artifacts.sh \
+  "${GENESIS_IN_SECONDS}" \
+  "${NETWORK_NAME}"
 
-if [ ! -d "../casper-node-launcher" ];
-then
-  echo "missing ../casper-node-launcher ; casper-node-launcher must be checked out in parent directory"
-  exit 1
-fi
+# Starts attempting to upload artifacts in the background in dev mode
+source "${PWD}"/scripts/upload_artifacts.sh \
+  "${NETWORK_NAME}" \
+  "${NODE_NAME_PREFIX}" \
+  "${HELM_CHART_NAME}" \
+  &
 
-if [ ! -f "../casper-node-launcher/target/release/casper-node-launcher" ];
-then
-  echo "build casper-node-launcher before running create-kube-network"
-  exit 1
-fi
-
-############################################################################################
-# uniquely name network
-############################################################################################
-
-
-git_hash=`cd ../casper-node/; git rev-parse --short HEAD`
-if [[ -z "${network_name_prefix}" ]]; then
-  network_name_prefix=`whoami`
-fi
-random=`openssl rand -hex 2`
-network_name="${network_name_prefix}-${git_hash}-${random}"
-
-if [[ "$( kubectl get namespaces | grep -c "${network_name}")" -gt 0 ]]; then
-  >&2 echo "There is already a namespace for the given network_name_prefix"
-  >&2 echo "Aborting attempt to create the network..."
-  exit 1
-fi
-
-############################################################################################
-# generate casper-tool artifacts
-############################################################################################
-
-echo "--------------------------------------------------"
-echo "running casper-tool:"
-echo "./casper-tool.py create-network --genesis-in $genesis_in_seconds --hosts-file kube-hosts.yaml artifacts/$network_name"
-echo "--------------------------------------------------"
-
-./casper-tool.py create-network --genesis-in $genesis_in_seconds --hosts-file kube-hosts.yaml artifacts/$network_name
-
-
-############################################################################################
-# generate stests network artifacts
-# https://github.com/CasperLabs/stests/blob/master/docs/usage_lrt.md
-############################################################################################
-
-cd artifacts/$network_name
-
-mkdir stests_net
-mkdir stests_net/configs
-mkdir stests_net/faucet
-mkdir stests_net/bin
-
-cp staging/config/chainspec.toml stests_net/
-cp staging/config/accounts.toml stests_net/
-cp staging/faucet/secret_key.pem stests_net/faucet
-cp staging/bin/casper-client stests_net/bin
-
-cd ./nodes
-for node in *;
-do
-        echo $node
-        mkdir -p ../stests_net/configs/$node
-        cp $node/etc/casper/keys/secret_key.pem ../stests_net/configs/$node/
-done
-
-cd ../../..
-
-
-############################################################################################
-# sync artifacts to s3
-############################################################################################
-
-echo "--------------------------------------------------"
-echo "uploading artifacts to s3"
-echo "--------------------------------------------------"
-
-aws s3 sync artifacts/$network_name s3://$build_bucket/networks/$network_name
-
-
-
-############################################################################################
-# create Kubernetes Resources
-############################################################################################
-
-
-kube_resources_yaml="./artifacts/${network_name}/kube_resources.yaml"
-
-echo "--------------------------------------------------"
-echo "Creating network in kube namespace $network_name"
-echo "--------------------------------------------------"
-echo ""
-echo "Network Name: $network_name"
-echo "Build git rev: $git_hash"
-echo ""
-echo "writing $kube_resources_yaml"
-
-for index in $(seq 1 $node_count)
-do
-
-zero_pad_index=$(printf %03d $index)
-node_label="casper-node-$zero_pad_index"
-
-cat << EOF >> $kube_resources_yaml
-#
-# $node_label
-#
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: $node_label-pv-claim
-spec:
-  storageClassName: gp2
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: $node_storage
-
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: $node_label
-spec:
-  selector:
-    app: $node_label
-  ports:
-    - name: rest
-      protocol: TCP
-      port: 8888
-      targetPort: 8888
-    - name: rpc
-      protocol: TCP
-      port: 7777
-      targetPort: 7777
-    - name: casper-node
-      protocol: TCP
-      port: 34553
-      targetPort: 34553
-
----
-kind: Deployment
-apiVersion: apps/v1
-metadata:
-  name: "${node_label}"
-  labels:
-    app: $node_label
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: $node_label
-  template:
-    metadata:
-      labels:
-       app:  $node_label
-    spec:
-      containers:
-        - name: $node_label
-
-          image: "${docker_repository}/casper-kube-node"
-          env:
-          - name: CASPER_NODE_GIT_HASH
-            value: "$git_hash"
-          - name: CASPER_NODE_INDEX
-            value: "$zero_pad_index"
-          - name: NETWORK_NAME
-            value: "$network_name"
-          - name: RUST_LOG
-            value: info
-          - name: RUST_BACKTRACE
-            value: "1"
-          resources:
-            limits:
-              cpu: "$node_cpu_limit"
-              memory: "$node_mem_limit"
-            requests:
-              cpu: "$node_cpu_request"
-              memory: "$node_mem_request"
-          volumeMounts:
-          - mountPath: "/storage"
-            name: $node_label-pv
-          securityContext:
-            capabilities:
-              add:
-                - NET_ADMIN
-      volumes:
-        - name: $node_label-pv
-          persistentVolumeClaim:
-            claimName: $node_label-pv-claim
-
-
-EOF
-
-done
-
-cat << EOF >> $kube_resources_yaml
-
----
-kind: Pod
-apiVersion: v1
-metadata:
-  name: casper-util
-spec:
-  containers:
-  - image: "${docker_repository}/casper-kube-util"
-    env:
-    - name: CASPER_NODE_GIT_HASH
-      value: "$git_hash"
-    name: casper-util
-  restartPolicy: Always
-EOF
-
-cat << EOF >> $kube_resources_yaml
-
----
-kind: Pod
-apiVersion: v1
-metadata:
-  name: casper-stests
-spec:
-  containers:
-  - image: "${docker_repository}/casper-kube-stests"
-    env:
-    - name: CASPER_NODE_GIT_HASH
-      value: "$git_hash"
-    - name: NETWORK_NAME
-      value: "$network_name"
-    name: casper-stests
-  restartPolicy: Always
-EOF
-
-############################################################################################
-# apply Kubernetes Resources
-############################################################################################
-
-kubectl create namespace $network_name
-kubectl apply -n $network_name -f $kube_resources_yaml
-
-echo ""
-echo "Network creation complete."
-echo ""
-
-echo "Kibana Logs:"
-echo ""
-echo "http://$kibana_host/app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-15m,to:now))&_a=(columns:!(kubernetes.container.name,message),filters:!(('\$state':(store:appState),meta:(alias:!n,disabled:!f,index:'$kibana_filebeat_index',key:kubernetes.namespace,negate:!f,params:(query:$network_name),type:phrase),query:(match_phrase:(kubernetes.namespace:$network_name)))),index:'$kibana_filebeat_index',interval:auto,query:(language:kuery,query:''),sort:!())"
-
+# Deploy the network with a statefulset helm chart
+source "${PWD}"/scripts/deploy.sh \
+  "${NETWORK_NAME}" \
+  "${NODE_NAME_PREFIX}" \
+  "${DEVELOPMENT_MODE}" \
+  "${NODE_COUNT}" \
+  "${NODE_STORAGE_CAPACITY}" \
+  "${RWO_STORAGE_CLASS}" \
+  "${RWM_STORAGE_CLASS}" \
+  "${NODE_MEM_LIMIT}" \
+  "${NODE_CPU_LIMIT}" \
+  "${IMAGE_TAG}"

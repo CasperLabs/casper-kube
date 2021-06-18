@@ -1,53 +1,83 @@
 # casper-kube
 
-Run a [casper-tool](https://github.com/dwerner/casper-test-ansible/blob/main/casper-tool.py) generated network on Kubernetes using your current dev build (`casper-node/target/release/casper-node`) on a network of arbitary size (Node Count) and resource requests (CPU/Mem/Storage).
+A kubernetes statefulset driven casper network intended for development
+and or integration tests.
 
-Kubernetes will autoscale the cluster to meet the resources requested.
+Generates a network on Kubernetes using your the current
+binaries from a local casper-node project.
 
-## Requirements
+Can facilitate a network of arbitary size in terms of the
+number of pods and CPU/Memory resources requested.
 
-* Request access to the cluster from SRE (AWS user added to eks_test [Cluster Auth ConfigMap](https://github.com/CasperLabs/sre/blob/master/kubernetes/clusters/test/config-map-aws-auth.yaml) and RW access to s3://builds.casperlabs.io)
-* Ensure you have AWS keys setup in `~/.aws/credentials` as outlined in the [AWS Documentation](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html)
-* Install [aws-iam-authenticator](https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html)
-* Install eks_test [kubeconfig](https://github.com/CasperLabs/sre/blob/master/terraform/kubernetes/test/kubeconfig_test) at `~/.kube/config`
-* Install [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) and [Lens](https://k8slens.dev/)
+Can be run in `development_mode` in which case binaries and configurations
+from the developers local laptop will be uploaded to the kubernetes environment
+facilitating testing changes being made locally on a large sized network beyond
+which the [nctl](https://github.com/casper-network/casper-node/blob/master/utils/nctl/README.md)
+tool is capable.
 
+## Prerequisites
 
-see [Confluence Kubernetes docs](https://casperlabs.atlassian.net/wiki/spaces/OPS/pages/1034584065/Kubernetes)
+### Basic Requirements
 
+* A kubernetes cluster with sufficient capacity to support the
+network and ideally node autoscaling capabilities enabled. Exact resource
+requirements depend on the size of network generated.
 
-The following repositories must be checked out at the same level
+* A kubeconfig file granting access to the kubernetes cluster.
 
+* [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl)
+
+* [Helm](https://helm.sh/docs/intro/install)
+
+* [Dasel](https://daseldocs.tomwright.me/installation) for building
+the `kube-hosts.yaml` file with an arbitrary number of pods
+
+### Development Mode Requirements
+
+* Availability in cluster of a ReadWriteMany storageclass available within the cluster. If
+a ReadWriteMany storageclass is unavailable, then one can be created by deploying
+a `nfs-server-provisioner`. The [install_nfs_provisioner script](./scripts/install_nfs_provisioner.sh) 
+can be used to deploy a `nfs-server-provisioner`. More information about available storageclasses 
+can be found [in the kubernetes docs](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes).
+
+* [Devspace](https://devspace.cloud/docs/cli/getting-started/installation)
+for copying local files to k8s.
+
+### Optional tools
+
+* [Lens](https://k8slens.dev/)
+
+## Usage
+
+### Development Mode
+
+#### Generate the binaries
+
+Clone the required casperlab github repositories at the same directory
+tree level.
+
+```bash
+git clone https://github.com/CasperLabs/casper-kube.git
+git clone https://github.com/casper-network/casper-node.git
+git clone https://github.com/casper-network/casper-node-launcher.git
 ```
-casper-kube
-casper-node
-casper-node-launcher
+
+Checkout the required version for local development purposes and then
+make the code changes of interest. Example below.
+
+```bash
+pushd casper-node
+git fetch origin && git checkout dev
+popd
 ```
 
+Once the necessary code changes are made, build the
+casper binaries locally. The following block of code builds
+the binaries for
 
-#### Usage
-
-**kube-hosts.yaml** defines the network. eg.
-
-```
-all:
-  children:
-    bootstrap:
-      hosts:
-        casper-node-001: ''
-    validators:
-      hosts:
-        casper-node-002: ''
-        casper-node-003: ''
-    zero_weight:
-      hosts:
-        casper-node-004: ''
-        casper-node-005: ''
-```
-
-**Create a network**
-
-* `casper-node` & `casper-node-launcher` binaries (release) must be built before running `create-kube-network`
+* [casper-node-launcher](https://github.com/casper-network/casper-node-launcher)
+* [casper-client](https://github.com/casper-network/casper-node/tree/master/client)
+* [casper-node](https://github.com/casper-network/casper-node/tree/master/node)
 
 ```bash
 pushd casper-node-launcher || >&2 echo "casper-node-launcher dir expected"
@@ -60,66 +90,52 @@ cargo build --release --package casper-node
 popd
 ```
 
-* `node_count option` must match the number of nodes defined in kube-hosts.yaml
-* `genesis_in_seconds option` must be longer than the time taken to spin up the network to a running state. (A higher node count will require a higher delay until genesis)
+#### Deploy the Network
 
-```
-# 5 node network
-cp kube_hosts_examples/kube-hosts-5.yaml ./kube-hosts.yaml
-./create-kube-network --network_name_prefix "mynet" \
-                      --node_count 5 \
-                      --node_cpu 2 \
-                      --node_mem 2Gi \
-                      --node_storage 10Gi \
-                      --genesis_in_seconds 300
-
-# 50 node network
-cp kube_hosts_examples/kube-hosts-50.yaml ./kube-hosts.yaml
-./create-kube-network --network_name_prefix "mynet" \
-                      --node_count 50 \
-                      --node_cpu 1 \
-                      --node_mem 500Mi \
-                      --node_storage 1Gi \
-                      --genesis_in_seconds 900
+```bash
+./create-kube-network \
+  --bootstrap_node_count 3 \
+  --development_mode true \
+  --genesis_in_seconds 1200 \
+  --image_tag latest \
+  --network_name_prefix mynet \
+  --node_name_prefix casper-node \
+  --node_count 7 \
+  --node_cpu 500m \
+  --node_mem 500Mi \
+  --node_storage_capacity 1Gi \
+  --rwo_storage_class gp2 \
+  --rwm_storage_class nfs \
+  --validator_node_count 2 \
+  --zero_weight_node_count 2
 ```
 
+### Deleting the Network
 
-**View network in Lens**
+This can be achieved by deleting the network namespace
+in the kubernetes cluster and artifacts in the local
+`./artifacts` directory.
+
+## Network Inspection
+
+### View network in Lens
 
 Navigate to `Workloads -> Pods` and selected the generated network from the Namespace dropdown menu. eg. `rob-cb1d20ad-c6ed`
 
 ![Lens example](docs/readme1.png)
 
-**View logs / Get Shell / Monitoring**
+### View logs / Get Shell / Monitoring
 
 Use Pod context menu (top right shelf icons)
 
 ![Lens example](docs/readme2.png)
 
-**View logs in Kibana**
+### View logs in Kibana
 
 `create-kube-network` will output a link to Kibana with logs scoped to the newly created network
 
 ![Kibana Logs](docs/readme3.png)
 
-**Deleting a Network**
+## License
 
-Navigate to `Namespaces` and delete the network.
-
-All resources associated with the network (pods, volumes) will be removed and the cluster will scale down.
-
-![Delete Network](docs/readme4.png)
-
-Alternatively, the following script will clean up the namespace and network artifacts.
-
-```bash
-./clean-kube-network --network_name_prefix "mynet"
-```
-
-### Chaos
-
-Nodes are launched on Kubernetes workers running on AWS Spot Instances (leveraging ~90% cost savings).
-
-In the event a Spot Termination occurs (workers will typically stay up for weeks at a time) the terminated `casper-node` Pod will be rescheduled on another Kubernetes worker.
-
-The `/storage` volume is persistent and survives the reschedule.
+[Apache 2.0](./LICENSE)

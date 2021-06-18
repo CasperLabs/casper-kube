@@ -1,0 +1,15 @@
+apiVersion: v2
+name: casper-kube
+description: A Helm chart to deploy a casper network for development or testing purposes
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+# kubeVersion: ">=1.9.0"
+keywords:
+  - casperlabs
+  - casper-node
+  - blockchain
+home: https://github.com/Casperlabs/casper-kube
+sources:
+  - https://github.com/Casperlabs/casper-kube
+  - https://github.com/Casperlabs/casper-node

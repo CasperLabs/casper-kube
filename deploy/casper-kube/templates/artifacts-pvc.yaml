@@ -1,0 +1,20 @@
+{{- if .Values.developmentMode }}
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ include "casper-kube.fullname" . }}-artifacts
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": hook-failed
+spec:
+  accessModes:
+    # - ReadOnlyMany
+    - ReadWriteMany
+  storageClassName: {{ .Values.artifactsVolumeStorageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.artifactsVolumeClaimSize }}
+  volumeMode: Filesystem
+{{- end }}

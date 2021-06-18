@@ -1,0 +1,22 @@
+{{- $values := .Values }}
+{{- $fullname := include "casper-kube.fullname" . }}
+{{- range $i := until (.Values.replicaCount | int) }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullname }}-{{ $i }}
+  labels:
+    statefulset.kubernetes.io/pod-name: {{ $fullname }}-{{ $i }}
+spec:
+  type: ClusterIP
+  ports:
+    {{- range $values.service.ports }}
+      - name: {{ .name }}
+        protocol: {{ .protocol }}
+        port: {{ .servicePort }}
+        targetPort: {{ .podPort }}
+    {{- end }}
+  selector:
+    statefulset.kubernetes.io/pod-name: {{ $fullname }}-{{ $i }}
+{{- end }}
