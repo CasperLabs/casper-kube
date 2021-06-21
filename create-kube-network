@@ -16,8 +16,8 @@ DEFINE_string 'network_name_prefix' '' 'network_name_prefix' 'p'
 DEFINE_string 'node_name_prefix' 'casper-node' 'node name' 'n'
 DEFINE_string 'node_count' '5' 'node count' 't'
 DEFINE_string 'bootstrap_node_count' '1' 'bootstrap node count' 'b'
-DEFINE_string 'validator_node_count' '2' 'bootstrap node count' 'v'
-DEFINE_string 'zero_weight_node_count' '2' 'bootstrap node count' 'z'
+DEFINE_string 'validator_node_count' '' 'bootstrap node count' 'v'
+DEFINE_string 'zero_weight_node_count' '' 'bootstrap node count' 'z'
 DEFINE_string 'node_cpu' '500m' 'node cpu request' 'c'
 DEFINE_string 'node_mem' '500Mi' 'node memory request' 'm'
 DEFINE_string 'node_storage' '1Gi' 'node storage volume size' 's'
@@ -36,7 +36,7 @@ echo "node_name_prefix: ${FLAGS_node_name_prefix}"
 echo "node_count: ${FLAGS_node_count}"
 echo "bootstrap_node_count: ${FLAGS_bootstrap_node_count}"
 echo "validator_node_count: ${FLAGS_validator_node_count}"
-echo "zero_weight_node_count ${FLAGS_zero_weight_node_count}"
+echo "zero_weight_node_count: ${FLAGS_zero_weight_node_count}"
 echo "node_cpu: ${FLAGS_node_cpu}"
 echo "node_mem: ${FLAGS_node_mem}"
 echo "node_storage: ${FLAGS_node_storage}"
