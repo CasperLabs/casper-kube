@@ -4,6 +4,9 @@ set -e
 RWO_STORAGE_CLASS="${1:-gp2}"
 HELM_VALUES_PATH="${2:-nfs-values.yaml}"
 
+# See
+# https://artifacthub.io/packages/helm/kvaps/nfs-server-provisioner
+# https://github.com/kubernetes-sigs/nfs-ganesha-server-and-external-provisioner/tree/master/deploy/helm
 helm repo add kvaps https://kvaps.github.io/charts
 
 if [[ -z "$(kubectl get storageclass nfs-retain 2>/dev/null || true)" ]]; then
