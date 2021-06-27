@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "casper-kube.fullname" . }}-scripts
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+data:
+  await-artifacts.sh: |-
+{{ .Files.Get "scripts/await-artifacts.sh" | indent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "casper-kube.fullname" . }}-scripts
+data:
+  init-node.sh: |-
+{{ .Files.Get "scripts/init-node.sh" | indent 4 }}
+  init-artifacts.sh: |-
+{{ .Files.Get "scripts/init-artifacts.sh" | indent 4 }}

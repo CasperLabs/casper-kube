@@ -1,0 +1,63 @@
+# When developmentMode is enabled, the job awaits upload of network artifacts
+{{- if .Values.developmentMode }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "casper-kube.fullname" . }}-artifacts
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+spec:
+  activeDeadlineSeconds: 420
+  ttlSecondsAfterFinished: 120
+  backoffLimit: 0
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: {{ include "casper-kube.fullname" . }}-artifacts
+      labels:
+        app.kubernetes.io/name: {{ include "casper-kube.name" . }}-artifacts
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ include "casper-kube.fullname" . }}-scripts
+          configMap:
+            name: {{ include "casper-kube.fullname" . }}-scripts
+            defaultMode: 0777
+        - name: {{ include "casper-kube.fullname" . }}-artifacts
+          persistentVolumeClaim:
+            claimName: {{ include "casper-kube.fullname" . }}-artifacts
+      restartPolicy: Never
+      containers:
+        - name: {{ .Chart.Name }}
+          command: ["/scripts/await-artifacts.sh"]
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: {{ include "casper-kube.fullname" . }}-scripts
+              mountPath: "/scripts"
+            - name: {{ include "casper-kube.fullname" . }}-artifacts
+              mountPath: "/shared/artifacts"
+          env:
+            - name: NETWORK_NAME
+              value: {{ .Values.network_name | quote }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end -}}
