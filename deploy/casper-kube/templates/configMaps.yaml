@@ -20,3 +20,5 @@ data:
 {{ .Files.Get "scripts/init-node.sh" | indent 4 }}
   init-artifacts.sh: |-
 {{ .Files.Get "scripts/init-artifacts.sh" | indent 4 }}
+  init-stests.sh: |-
+{{ .Files.Get "scripts/init-stests.sh" | indent 4 }}i

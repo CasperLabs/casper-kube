@@ -23,8 +23,27 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+        - name: {{ include "casper-kube.fullname" . }}-scripts
+          configMap:
+            name: {{ include "casper-kube.fullname" . }}-scripts
+            defaultMode: 0777
+        {{- if .Values.developmentMode }}
+        - name: {{ include "casper-kube.fullname" . }}-artifacts
+          persistentVolumeClaim:
+            claimName: {{ include "casper-kube.fullname" . }}-artifacts
+        {{- end }}
       containers:
         - name: {{ .Chart.Name }}
+          command: ["/scripts/init-stests.sh"]
+          volumeMounts:
+            - name: {{ include "casper-kube.fullname" . }}-scripts
+              mountPath: "/scripts"
+            {{- if .Values.developmentMode }}
+            - name: {{ include "casper-kube.fullname" . }}-artifacts
+              mountPath: "/shared/artifacts"
+              readOnly: true
+            {{- end }}
           image: "{{ .Values.stests.image.repository }}:{{ .Values.stests.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.stests.image.pullPolicy }}
           resources:
@@ -34,6 +53,10 @@ spec:
               value: {{ .Values.gitHash | quote }}
             - name: NETWORK_NAME
               value: {{ .Values.network_name | quote }}
+            {{- if .Values.developmentMode }}
+            - name: DEVELOPMENT_MODE
+              value: {{ .Values.developmentMode | quote }}
+            {{- end }}
       {{- with .Values.stests.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

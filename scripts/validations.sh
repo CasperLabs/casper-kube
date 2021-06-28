@@ -32,6 +32,14 @@ then
   exit 1
 fi
 
+if [ "${DEVELOPMENT_MODE}" == "true" ]; then
+    if ! which devspace > /dev/null;
+    then
+      >&2 echo "devspace not installed"
+      exit 1
+    fi
+fi
+
 if [ ! -d "../casper-node" ];
 then
   >&2 echo "missing ../casper-node ; casper-node must be checked out in parent directory"

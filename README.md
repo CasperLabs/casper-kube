@@ -1,16 +1,13 @@
 # casper-kube
 
 A kubernetes statefulset driven casper network intended for development
-and or integration tests.
-
-Generates a network on Kubernetes using your the current
-binaries from a local casper-node project.
+and/or integration tests.
 
 Can facilitate a network of arbitary size in terms of the
 number of pods and CPU/Memory resources requested.
 
-Can be run in `development_mode` in which case binaries and configurations
-from the developers local laptop will be uploaded to the kubernetes environment
+Can be run in `development_mode` in which case, the binaries and configurations
+from the developers local workstation will be uploaded to the kubernetes environment
 facilitating testing changes being made locally on a large sized network beyond
 which the [nctl](https://github.com/casper-network/casper-node/blob/master/utils/nctl/README.md)
 tool is capable.
@@ -36,8 +33,8 @@ the `kube-hosts.yaml` file with an arbitrary number of pods
 
 * Availability in cluster of a ReadWriteMany storageclass available within the cluster. If
 a ReadWriteMany storageclass is unavailable, then one can be created by deploying
-a `nfs-server-provisioner`. The [install_nfs_provisioner script](./scripts/install_nfs_provisioner.sh) 
-can be used to deploy a `nfs-server-provisioner`. More information about available storageclasses 
+a `nfs-server-provisioner`. The [install_nfs_provisioner script](./scripts/install_nfs_provisioner.sh)
+can be used to deploy a `nfs-server-provisioner`. More information about available storageclasses
 can be found [in the kubernetes docs](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes).
 
 * [Devspace](https://devspace.cloud/docs/cli/getting-started/installation)
@@ -113,7 +110,7 @@ popd
 ### Deleting the Network
 
 This can be achieved by deleting the network namespace
-in the kubernetes cluster and artifacts in the local
+in the kubernetes cluster and artifacts for the network in the local
 `./artifacts` directory.
 
 ## Network Inspection
