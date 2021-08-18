@@ -681,10 +681,6 @@ def generate_node_config(known_addresses, config_template, obj, nodes_path, node
     Path(node_config_path).mkdir(parents=True, exist_ok=True)
     config = toml.load(open(config_template))
 
-    config["rpc_server"]["qps_limit"] = \
-    config["event_stream_server"]["qps_limit"] = \
-    config["rest_server"]["qps_limit"] = 10000
-
     if trusted_hash:
         config["node"]["trusted_hash"] = trusted_hash
 
@@ -700,13 +696,14 @@ def generate_node_config(known_addresses, config_template, obj, nodes_path, node
     # Setup for volume operation.
     storage_path = "/storage/{}".format(public_address)
     config["storage"]["path"] = storage_path
-    config["network"]["gossip_interval"] = 120000
+
     try:
         config["consensus"]["highway"]
     except NameError:
         config["consensus"]["unit_hashes_folder"] = storage_path
     else:
         config["consensus"]["highway"]["unit_hashes_folder"] = storage_path
+
     toml.dump(config, open(os.path.join(node_config_path, "config.toml", ), "w"))
 
 # create config-example.toml
@@ -827,12 +824,12 @@ def create_hosts_file(network_name, obj):
         }
     }
 
-    for node_index in range(0,1):
-        hosts_file["all"]["children"]["bootstrap"]["hosts"].update({ "{}-{}".format(network_name, node_index): ""})
-    for node_index in range(1, total_node_count - zero_weight_count):
-        hosts_file["all"]["children"]["validators"]["hosts"].update({ "{}-{}".format(network_name, node_index): ""})
-    for node_index in range(validator_count, total_node_count):
-        hosts_file["all"]["children"]["zero_weight"]["hosts"].update({ "{}-{}".format(network_name, node_index): ""})
+    for node_index in range(1,2):
+        hosts_file["all"]["children"]["bootstrap"]["hosts"].update({ "{}-{}".format("casper-node", str(node_index).zfill(3)): ""})
+    for node_index in range(2, total_node_count - zero_weight_count + 1):
+        hosts_file["all"]["children"]["validators"]["hosts"].update({ "{}-{}".format("casper-node", str(node_index).zfill(3)): ""})
+    for node_index in range(validator_count + 1, total_node_count + 1):
+        hosts_file["all"]["children"]["zero_weight"]["hosts"].update({ "{}-{}".format("casper-node", str(node_index).zfill(3)): ""})
 
     return(hosts_file)
 

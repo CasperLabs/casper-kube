@@ -38,6 +38,8 @@ chmod +x /var/lib/casper/bin/$CASPER_NODE_VERSION/casper-node
 
 
 #prevent the container from exiting even if casper-node exit's  
-/var/lib/casper/bin/$CASPER_NODE_VERSION/casper-node validator /etc/casper/$CASPER_NODE_VERSION/config.toml &
-tail -f /dev/null
+#/var/lib/casper/bin/$CASPER_NODE_VERSION/casper-node validator /etc/casper/$CASPER_NODE_VERSION/config.toml &
+# start launcher
+bash -c "exec /usr/bin/casper-node-launcher"
+#tail -f /dev/null
 
