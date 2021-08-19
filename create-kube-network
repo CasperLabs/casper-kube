@@ -290,6 +290,42 @@ EOF
 
 done
 
+cat << EOF >> $kube_resources_yaml
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: casper-ingress
+spec:
+  rules:
+EOF
+
+for index in $(seq 1 $node_count)
+do
+
+zero_pad_index=$(printf %03d $index)
+node_label="casper-node-$zero_pad_index"
+
+cat << EOF >> $kube_resources_yaml
+  - host: $node_label.k8s.srtip.casperlabs.io
+    http:
+      paths:
+      - path: /status
+        backend:
+          serviceName: $node_label
+          servicePort: 8888
+      - path: /rpc
+        backend:
+          serviceName: $node_label
+          servicePort: 7777
+      - path: /events
+        backend:
+          serviceName: $node_label
+          servicePort: 9999
+EOF
+
+done
 # cat << EOF >> $kube_resources_yaml
 
 # ---
