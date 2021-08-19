@@ -16,6 +16,12 @@ then
     exit 1
 fi
 
+if [ -z "$CASPER_NODE_VERSION" ]
+then
+    echo "CASPER_NODE_VERSION not set, exiting"
+    exit 1
+fi
+
 #ensure the bootstrap node has started, before bringing up our node
 #if [ ! $CASPER_NODE_INDEX == "001" ]; 
 #then 
@@ -28,10 +34,12 @@ aws s3 sync s3://$bucket_name/networks/$NETWORK_NAME/nodes/casper-node-$CASPER_N
 
 #binary
 aws s3 sync s3://$bucket_name/networks/$NETWORK_NAME/staging/bin /var/lib/casper/bin
-chmod +x /var/lib/casper/bin/1_0_0/casper-node
+chmod +x /var/lib/casper/bin/$CASPER_NODE_VERSION/casper-node
 
 
 #prevent the container from exiting even if casper-node exit's  
-/var/lib/casper/bin/1_0_0/casper-node validator /etc/casper/1_0_0/config.toml &
-tail -f /dev/null
+#/var/lib/casper/bin/$CASPER_NODE_VERSION/casper-node validator /etc/casper/$CASPER_NODE_VERSION/config.toml &
+# start launcher
+bash -c "exec /usr/bin/casper-node-launcher"
+#tail -f /dev/null
 

@@ -19,7 +19,9 @@ kibana_host="kibana.test.k8s.casperlabs.io"
 ############################################################################################
 
 
-DEFINE_string 'node_count' '5' 'node count' 't'
+DEFINE_string 'node_count' '7' 'node count' 't'
+DEFINE_string 'node_version' '1_0_0' 'node version' 'n'
+DEFINE_string 'node_port' '35000' 'node version' 'p'
 DEFINE_string 'node_cpu' '500m' 'node cpu request' 'c'
 DEFINE_string 'node_mem' '500Mi' 'node memory request' 'm'
 DEFINE_string 'node_storage' '1Gi' 'node storage volume size' 's'
@@ -34,12 +36,16 @@ echo "opts"
 echo "--------------------------------------------------"
 
 echo "node_count: ${FLAGS_node_count}"
+echo "node_version: ${FLAGS_node_version}"
+echo "node_port: ${FLAGS_node_port}"
 echo "node_cpu: ${FLAGS_node_cpu}"
 echo "node_mem: ${FLAGS_node_mem}"
 echo "node_storage: ${FLAGS_node_storage}"
 echo "genesis_in_seconds: ${FLAGS_genesis_in_seconds}"
 
 node_count=$FLAGS_node_count
+node_version=$FLAGS_node_version
+node_port=$FLAGS_node_port
 node_mem_limit=$FLAGS_node_mem
 node_mem_request=$FLAGS_node_mem
 node_cpu_limit=$FLAGS_node_cpu
@@ -75,39 +81,39 @@ then
   exit 1
 fi
 
-if [ ! -d "../casper-node" ];
-then
-  echo "missing ../casper-node ; casper-node must be checked out in parent directory"
-  exit 1
-fi
+# if [ ! -d "../casper-node" ];
+# then
+#   echo "missing ../casper-node ; casper-node must be checked out in parent directory"
+#   exit 1
+# fi
 
-if [ ! -f "../casper-node/target/release/casper-node" ];
-then
-  echo "build casper-node before running create-kube-network"
-  exit 1
-fi
+# if [ ! -f "../casper-node/target/release/casper-node" ];
+# then
+#   echo "build casper-node before running create-kube-network"
+#   exit 1
+# fi
 
-if [ ! -d "../casper-node-launcher" ];
-then
-  echo "missing ../casper-node-launcher ; casper-node-launcher must be checked out in parent directory"
-  exit 1
-fi
+# if [ ! -d "../casper-node-launcher" ];
+# then
+#   echo "missing ../casper-node-launcher ; casper-node-launcher must be checked out in parent directory"
+#   exit 1
+# fi
 
-if [ ! -f "../casper-node-launcher/target/release/casper-node-launcher" ];
-then
-  echo "build casper-node-launcher before running create-kube-network"
-  exit 1
-fi
+# if [ ! -f "../casper-node-launcher/target/release/casper-node-launcher" ];
+# then
+#   echo "build casper-node-launcher before running create-kube-network"
+#   exit 1
+# fi
 
 ############################################################################################
 # uniquely name network
 ############################################################################################
 
 
-git_hash=`cd ../casper-node/; git rev-parse --short HEAD`
+git_hash=`cd ../casper-node/; git rev-parse --short HEAD` ||  echo "none"
 user=`whoami`
 random=`openssl rand -hex 2`
-network_name="${user}-${git_hash}-${random}"
+network_name="${user}-${random}"
 
 
 ############################################################################################
@@ -119,46 +125,47 @@ echo "running casper-tool:"
 echo "./casper-tool.py create-network --genesis-in $genesis_in_seconds --hosts-file kube-hosts.yaml artifacts/$network_name"
 echo "--------------------------------------------------"
 
-./casper-tool.py create-network --genesis-in $genesis_in_seconds --hosts-file kube-hosts.yaml artifacts/$network_name
+./casper-tool.py --node-port $node_port collect-release --node-version $node_version artifacts/$network_name
+./casper-tool.py --node-port $node_port create-network --node-version $node_version artifacts/$network_name
+./casper-tool.py --node-port $node_port publish-network --node-version $node_version artifacts/$network_name --aws-profile casperlabs-default
+
+# ############################################################################################
+# # generate stests network artifacts
+# # https://github.com/CasperLabs/stests/blob/master/docs/usage_lrt.md
+# ############################################################################################
+
+# cd artifacts/$network_name
+
+# mkdir stests_net
+# mkdir stests_net/configs
+# mkdir stests_net/faucet
+# mkdir stests_net/bin
+
+# cp staging/config/chainspec.toml stests_net/
+# cp staging/config/accounts.toml stests_net/
+# cp staging/faucet/secret_key.pem stests_net/faucet
+# cp staging/bin/casper-client stests_net/bin
+
+# cd ./nodes
+# for node in *;
+# do
+#         echo $node
+#         mkdir -p ../stests_net/configs/$node
+#         cp $node/etc/casper/keys/secret_key.pem ../stests_net/configs/$node/
+# done
+
+# cd ../../..
 
 
-############################################################################################
-# generate stests network artifacts
-# https://github.com/CasperLabs/stests/blob/master/docs/usage_lrt.md
-############################################################################################
+# ############################################################################################
+# # sync artifacts to s3
+# ############################################################################################
 
-cd artifacts/$network_name
+# echo "--------------------------------------------------"
+# echo "uploading artifacts to s3"
+# echo "--------------------------------------------------"
 
-mkdir stests_net
-mkdir stests_net/configs
-mkdir stests_net/faucet
-mkdir stests_net/bin
-
-cp staging/config/chainspec.toml stests_net/
-cp staging/config/accounts.toml stests_net/
-cp staging/faucet/secret_key.pem stests_net/faucet
-cp staging/bin/casper-client stests_net/bin
-
-cd ./nodes
-for node in *;
-do
-        echo $node
-        mkdir -p ../stests_net/configs/$node
-        cp $node/etc/casper/keys/secret_key.pem ../stests_net/configs/$node/
-done
-
-cd ../../..
-
-
-############################################################################################
-# sync artifacts to s3
-############################################################################################
-
-echo "--------------------------------------------------"
-echo "uploading artifacts to s3"
-echo "--------------------------------------------------"
-
-aws s3 sync artifacts/$network_name s3://$build_bucket/networks/$network_name
+# aws s3 sync artifacts/$network_name s3://$build_bucket/networks/$network_name
 
 
 
@@ -174,6 +181,7 @@ echo "Creating network in kube namespace $network_name"
 echo "--------------------------------------------------"
 echo ""
 echo "Network Name: $network_name"
+echo "Node Version: $node_version"
 echo "Build git rev: $git_hash"
 echo ""
 echo "writing $kube_resources_yaml"
@@ -221,8 +229,8 @@ spec:
       targetPort: 7777
     - name: casper-node
       protocol: TCP
-      port: 34553
-      targetPort: 34553   
+      port: $node_port
+      targetPort: $node_port
 
 ---
 kind: Deployment
@@ -252,6 +260,8 @@ spec:
             value: "$zero_pad_index"
           - name: NETWORK_NAME
             value: "$network_name"
+          - name: CASPER_NODE_VERSION
+            value: "$node_version"
           - name: RUST_LOG
             value: info
           - name: RUST_BACKTRACE
@@ -280,41 +290,41 @@ EOF
 
 done
 
-cat << EOF >> $kube_resources_yaml
+# cat << EOF >> $kube_resources_yaml
 
----
-kind: Pod
-apiVersion: v1
-metadata:
-  name: casper-util
-spec:
-  containers:
-  - image: "${docker_repository}/casper-kube-util"
-    env:
-    - name: CASPER_NODE_GIT_HASH
-      value: "$git_hash"
-    name: casper-util
-  restartPolicy: Always
-EOF
+# ---
+# kind: Pod
+# apiVersion: v1
+# metadata:
+#   name: casper-util
+# spec:
+#   containers:
+#   - image: "${docker_repository}/casper-kube-util"
+#     env:
+#     - name: CASPER_NODE_GIT_HASH
+#       value: "$git_hash"
+#     name: casper-util
+#   restartPolicy: Always
+# EOF
 
-cat << EOF >> $kube_resources_yaml
+# cat << EOF >> $kube_resources_yaml
 
----
-kind: Pod
-apiVersion: v1
-metadata:
-  name: casper-stests
-spec:
-  containers:
-  - image: "${docker_repository}/casper-kube-stests"
-    env:
-    - name: CASPER_NODE_GIT_HASH
-      value: "$git_hash"
-    - name: NETWORK_NAME
-      value: "$network_name"            
-    name: casper-stests
-  restartPolicy: Always
-EOF
+# ---
+# kind: Pod
+# apiVersion: v1
+# metadata:
+#   name: casper-stests
+# spec:
+#   containers:
+#   - image: "${docker_repository}/casper-kube-stests"
+#     env:
+#     - name: CASPER_NODE_GIT_HASH
+#       value: "$git_hash"
+#     - name: NETWORK_NAME
+#       value: "$network_name"            
+#     name: casper-stests
+#   restartPolicy: Always
+# EOF
 
 ############################################################################################
 # apply Kubernetes Resources
