@@ -81,36 +81,27 @@ then
   exit 1
 fi
 
-# if [ ! -d "../casper-node" ];
-# then
-#   echo "missing ../casper-node ; casper-node must be checked out in parent directory"
-#   exit 1
-# fi
+############################################################################################
+# download casper-client
+############################################################################################
 
-# if [ ! -f "../casper-node/target/release/casper-node" ];
-# then
-#   echo "build casper-node before running create-kube-network"
-#   exit 1
-# fi
+latest_casper_client_version=$(aws s3 ls s3://repo.casperlabs.io/releases/pool/main/c/casper-client/ | sort | tail -1 | awk '{print $4}')
 
-# if [ ! -d "../casper-node-launcher" ];
-# then
-#   echo "missing ../casper-node-launcher ; casper-node-launcher must be checked out in parent directory"
-#   exit 1
-# fi
+echo ${latest_casper_client_version}
 
-# if [ ! -f "../casper-node-launcher/target/release/casper-node-launcher" ];
-# then
-#   echo "build casper-node-launcher before running create-kube-network"
-#   exit 1
-# fi
+aws s3 cp s3://repo.casperlabs.io/releases/pool/main/c/casper-client/${latest_casper_client_version} .
+
+dpkg -x ${latest_casper_client_version} .
+
+if [ $? -ne 0 ]; then
+  echo "error installing casper client"
+  exit 1
+fi
 
 ############################################################################################
 # uniquely name network
 ############################################################################################
 
-
-git_hash=`cd ../casper-node/; git rev-parse --short HEAD` ||  echo "none"
 user=`whoami`
 random=`openssl rand -hex 2`
 network_name="${user}-${random}"
@@ -128,48 +119,6 @@ echo "--------------------------------------------------"
 ./casper-tool.py --node-port $node_port collect-release --node-version $node_version artifacts/$network_name
 ./casper-tool.py --node-port $node_port create-network --node-version $node_version artifacts/$network_name
 ./casper-tool.py --node-port $node_port publish-network --node-version $node_version artifacts/$network_name --aws-profile casperlabs-default
-
-# ############################################################################################
-# # generate stests network artifacts
-# # https://github.com/CasperLabs/stests/blob/master/docs/usage_lrt.md
-# ############################################################################################
-
-# cd artifacts/$network_name
-
-# mkdir stests_net
-# mkdir stests_net/configs
-# mkdir stests_net/faucet
-# mkdir stests_net/bin
-
-# cp staging/config/chainspec.toml stests_net/
-# cp staging/config/accounts.toml stests_net/
-# cp staging/faucet/secret_key.pem stests_net/faucet
-# cp staging/bin/casper-client stests_net/bin
-
-# cd ./nodes
-# for node in *;
-# do
-#         echo $node
-#         mkdir -p ../stests_net/configs/$node
-#         cp $node/etc/casper/keys/secret_key.pem ../stests_net/configs/$node/
-# done
-
-# cd ../../..
-
-# ############################################################################################
-# # sync artifacts to s3
-# ############################################################################################
-
-# ############################################################################################
-# # sync artifacts to s3
-# ############################################################################################
-
-# echo "--------------------------------------------------"
-# echo "uploading artifacts to s3"
-# echo "--------------------------------------------------"
-
-# aws s3 sync artifacts/$network_name s3://$build_bucket/networks/$network_name
-
 
 
 ############################################################################################
@@ -329,41 +278,6 @@ cat << EOF >> $kube_resources_yaml
 EOF
 
 done
-# cat << EOF >> $kube_resources_yaml
-
-# ---
-# kind: Pod
-# apiVersion: v1
-# metadata:
-#   name: casper-util
-# spec:
-#   containers:
-#   - image: "${docker_repository}/casper-kube-util"
-#     env:
-#     - name: CASPER_NODE_GIT_HASH
-#       value: "$git_hash"
-#     name: casper-util
-#   restartPolicy: Always
-# EOF
-
-# cat << EOF >> $kube_resources_yaml
-
-# ---
-# kind: Pod
-# apiVersion: v1
-# metadata:
-#   name: casper-stests
-# spec:
-#   containers:
-#   - image: "${docker_repository}/casper-kube-stests"
-#     env:
-#     - name: CASPER_NODE_GIT_HASH
-#       value: "$git_hash"
-#     - name: NETWORK_NAME
-#       value: "$network_name"            
-#     name: casper-stests
-#   restartPolicy: Always
-# EOF
 
 ############################################################################################
 # apply Kubernetes Resources
