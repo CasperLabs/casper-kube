@@ -2,9 +2,7 @@
 
 from datetime import datetime, timedelta
 import os
-from platform import node
 import subprocess
-
 import click
 import shutil
 from click.types import STRING
@@ -13,56 +11,16 @@ import yaml
 import json
 import tarfile
 from pathlib import Path
-#from itertools import chain
 import boto3
 import requests
 import tarfile, io
 
-#: The port the node is reachable on.
-NODE_PORT = 34553
-
-
 @click.group()
 @click.option(
-    "-b",
-    "--basedir",
-    help="casper-node source code base directory",
-    type=click.Path(exists=True, dir_okay=True,
-                    file_okay=False, readable=True),
-    default=os.path.join(os.path.dirname(__file__), "..", "casper-node"),
-)
-@click.option(
-    "-l",
-    "--launcher",
-    help="casper-node-launcher source code base directory",
-    type=click.Path(exists=True, dir_okay=True,
-                    file_okay=False, readable=True),
-    default=os.path.join(os.path.dirname(__file__),
-                         "..", "casper-node-launcher"),
-)
-@click.option(
     "--casper-client",
-    help="path to casper client binary (compiled from basedir by default)",
+    help="path to casper client binary downloaded by default",
     type=click.Path(exists=True, dir_okay=False, readable=True),
-    default="../casper-node/target/release/casper-client",
-)
-@click.option(
-    "-p",
-    "--production",
-    is_flag=True,
-    help="Use production chainspec template instead of dev/local",
-)
-@click.option(
-    "-c",
-    "--config-template",
-    type=click.Path(exists=True, dir_okay=False, readable=True),
-    help="Node configuration template to use",
-)
-@click.option(
-    "-C",
-    "--chainspec-template",
-    type=click.Path(exists=True, dir_okay=False, readable=True),
-    help="Chainspec template to use",
+    default="./usr/bin/casper-client",
 )
 @click.option(
     "-P",
@@ -83,80 +41,23 @@ NODE_PORT = 34553
     default=2,
     help="Number of Non Validators",
 )
-# @click.option(
-#     "--get-release-url",
-#     type=STRING,
-#     default="http://genesis.casperlabs.io/casper",
-#     help="Release Builds Url (default=mainnet)",
-# )
-# @click.option(
-#     "--get-release-node-version",
-#     type=STRING,
-#     default="1_0_0",
-#     help="Release Node Version (default=1_0_0)",
-# )
 @click.pass_context
 def cli(
     ctx,
-    basedir,
-    launcher,
-    production,
-    chainspec_template,
-    config_template,
     casper_client,
     node_port,
     validator_count,
     non_validator_count,
-    # get_from_url,
-    # get_release_node_version
 ):
     """Casper Network creation tool
 
     Can be used to create new casper-labs chains with automatic validator setups. Useful for testing."""
     obj = {}
-    if chainspec_template:
-        obj["chainspec_template"] = chainspec_template
-    else:
-        obj["chainspec_template"] = os.path.join(
-            basedir, "resources", "production", "chainspec.toml"
-        )
-        #show_val("using production chainspec", obj["chainspec_template"])
 
-    if config_template:
-        obj["config_template"] = chainspec_template
-    elif production:
-        obj["config_template"] = os.path.join(
-            basedir, "resources", "production", "config.toml"
-        )
-    else:
-        obj["config_template"] = os.path.join(
-            basedir, "resources", "local", "config.toml"
-        )
-
-    if casper_client:
-        obj["casper_client_argv0"] = [casper_client]
-    else:
-        obj["casper_client_argv0"] = [
-            "cargo",
-            "run",
-            "--quiet",
-            "--manifest-path={}".format(os.path.join(basedir,
-                                                     "client", "Cargo.toml")),
-            "--",
-        ]
-
-    obj["casper-node-bin"] = \
-        os.path.join(basedir, "target", "release", "casper-node")
-    obj["casper-node-launcher-bin"] = \
-        os.path.join(launcher, "target", "release", "casper-node-launcher")
-
-    obj["casper-node-port"] = node_port
-
+    obj["casper_client_argv0"] = [casper_client]
     obj["validator-node-count"] = validator_count
     obj["zero-weight-node-count"] = non_validator_count
-
-    # obj["source-release-url"] = get_from_url
-    # obj["source-release-node-version"] = get_release_node_version
+    obj["casper-node-port"] = node_port
 
     ctx.obj = obj
     return
@@ -224,13 +125,7 @@ def add_joiners(
 
     # Copy casper-node into bin/VERSION/ staging dir
     node_bin_path = os.path.join(bin_version_path, "casper-node")
-    shutil.copyfile(obj["casper-node-bin"], node_bin_path)
     os.chmod(node_bin_path, 0o744)
-
-    # Copy casper-node-launcher into bin/ staging dir
-    launcher_bin_path = os.path.join(bin_path, "casper-node-launcher")
-    shutil.copyfile(obj["casper-node-launcher-bin"], launcher_bin_path)
-    os.chmod(launcher_bin_path, 0o744)
 
     show_val("Creating binary archive", "bin.tar.bz2")
     with tarfile.open(os.path.join(staging_path, "bin.tar.bz2"), "w:bz2") as tar:
@@ -241,7 +136,8 @@ def add_joiners(
     # Load validators from ansible yaml inventory
     hosts = yaml.load(open(hosts_file), Loader=yaml.FullLoader)
     #osts = hosts_json
-    show_val("Node config template", obj["config_template"])
+    config_template = os.path.join(config_path, "config-example.toml")
+    show_val("Node config template", config_template)
 
     joining_nodes = list(hosts["all"]["children"]["joiners"]["hosts"].keys())
     validator_nodes = list(hosts["all"]["children"]
@@ -251,7 +147,7 @@ def add_joiners(
 
     for public_address in joining_nodes:
         show_val("adding joining node", public_address)
-        generate_node_config(validator_nodes + bootstrap_nodes, obj,
+        generate_node_config(validator_nodes + bootstrap_nodes, config_template, obj,
                       nodes_path, node_version, public_address, trusted_hash)
         node_path = os.path.join(nodes_path, public_address)
 
@@ -365,7 +261,7 @@ def publish_network(
     default="1_0_0",
     help="Release Node Version (default=1_0_0)",
 )
-# create network
+# collect release
 def collect_release(
     obj,
     target_path,
@@ -512,21 +408,21 @@ def create_network(
         elif os.path.isfile(os.path.join(sources_version_path, 'chainspec.toml')):
             chainspec_template = os.path.join(sources_version_path, 'chainspec.toml')
         else:
-            chainspec_template = obj["chainspec_template"]
+            raise Exception("no chainspec_template found")
 
         if source_config:
             config_template = source_config
         elif os.path.isfile(os.path.join(sources_version_path, 'config-example.toml')):
             config_template = os.path.join(sources_version_path, 'config-example.toml')
         else:
-            config_template = obj["config_template"]
+            raise Exception("no config_template found")
 
         if source_casper_node:
             casper_node_bin = source_casper_node
         elif os.path.isfile(os.path.join(sources_version_path, 'casper-node')):
             casper_node_bin = os.path.join(sources_version_path, 'casper-node')
         else:
-            casper_node_bin = obj["casper-node-bin"]
+            raise Exception("no casper_node_bin found")
 
         # Update chainspec values.
         chainspec = create_chainspec(
@@ -538,32 +434,10 @@ def create_network(
         toml.dump(chainspec, open(chainspec_path, "w"))
         show_val("Chainspec", chainspec_path)
 
-
         # Copy casper-node into bin/VERSION/ staging dir
         node_bin_path = os.path.join(bin_version_path, "casper-node")
         shutil.copyfile(casper_node_bin, node_bin_path)
         os.chmod(node_bin_path, 0o744)
-
-        ## DISABLE (for now)
-        # # # Copy casper-node-launcher into bin/ staging dir
-        # launcher_bin_path = os.path.join(bin_path, "casper-node-launcher")
-        # shutil.copyfile(obj["casper-node-launcher-bin"], launcher_bin_path)
-        # os.chmod(launcher_bin_path, 0o744)
-
-        # # # Copy casper-client into bin/ staging dir
-        # client_bin_path = os.path.join(bin_path, "casper-client")
-        # show_val("copying client", obj["casper_client_argv0"][0])
-        # shutil.copyfile(obj["casper_client_argv0"][0], client_bin_path)
-        # os.chmod(client_bin_path, 0o744)
-
-        # bin_archive_path = os.path.join(staging_path, "bin.tar.bz2")
-        # if Path("/home/ubuntu/bin.tar.bz2").exists():
-        #     show_val("Found existing binary archive", "/home/ubuntu/bin.tar.bz2")
-        #     shutil.copyfile("/home/ubuntu/bin.tar.bz2", bin_archive_path)
-        # else:
-        #     show_val("Creating binary archive", "bin.tar.bz2")
-        #     with tarfile.open(bin_archive_path, "w:bz2") as tar:
-        #         tar.add(bin_path, arcname=os.path.basename(bin_path))
 
         if hosts_file:
             # Load validators from ansible yaml inventory
