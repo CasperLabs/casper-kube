@@ -1,0 +1,34 @@
+#!/bin/bash
+source ./shflags
+BUCKET_NAME="builds.casperlabs.io"
+
+DEFINE_string 'network_name' '' 'network name' 'n'
+
+# Parse the command-line.
+FLAGS "$@" || exit 1
+eval set -- "${FLAGS_ARGV}"
+
+echo "network_name: ${FLAGS_network_name}"
+
+network_name=${FLAGS_network_name}
+
+if [ -z "${network_name}" ]; then
+  echo "Network name not provided"
+  exit 1
+fi
+
+aws s3 rm s3://${BUCKET_NAME}/networks/${FLAGS_network_name} --recursive
+
+if [ $? -ne 0 ]; then
+  echo "Error removing artifacts from s3"
+  exit 1
+fi
+
+echo "Successfully deleted network"
+
+kubectl delete ns ${FLAGS_network_name}
+
+if [ $? -ne 0 ]; then
+  echo "Error deleting the network"
+  exit 1
+fi

@@ -26,6 +26,9 @@ DEFINE_string 'node_cpu' '500m' 'node cpu request' 'c'
 DEFINE_string 'node_mem' '500Mi' 'node memory request' 'm'
 DEFINE_string 'node_storage' '1Gi' 'node storage volume size' 's'
 DEFINE_string 'genesis_in_seconds' '300' 'genesis start x seconds in the future' 'g'
+DEFINE_string 'username' '$(whoami)' 'username' 'u'
+DEFINE_string 'kubeconfig' '${HOME}/.kube/config' 'kubeconfig' 'k'
+
 
 # Parse the command-line.
 FLAGS "$@" || exit 1
@@ -42,6 +45,7 @@ echo "node_cpu: ${FLAGS_node_cpu}"
 echo "node_mem: ${FLAGS_node_mem}"
 echo "node_storage: ${FLAGS_node_storage}"
 echo "genesis_in_seconds: ${FLAGS_genesis_in_seconds}"
+echo "username: ${FLAGS_username}"
 
 node_count=$FLAGS_node_count
 node_version=$FLAGS_node_version
@@ -52,6 +56,10 @@ node_cpu_limit=$FLAGS_node_cpu
 node_cpu_request=$FLAGS_node_cpu
 node_storage=$FLAGS_node_storage
 genesis_in_seconds=$FLAGS_genesis_in_seconds
+username=${FLAGS_username}
+
+export KUBECONFIG=/tmp/function/.kube/config
+
 
 ############################################################################################
 # sanity checks 
@@ -67,7 +75,7 @@ if ! aws sts get-caller-identity > /dev/null;
 then
   echo "aws credentials not setup"
   exit 1
- fi
+fi
 
 if ! which kubectl > /dev/null;
 then
@@ -84,6 +92,7 @@ fi
 ############################################################################################
 # download casper-client
 ############################################################################################
+echo "get latest version from s3"
 
 latest_casper_client_version=$(aws s3 ls s3://repo.casperlabs.io/releases/pool/main/c/casper-client/ | sort | tail -1 | awk '{print $4}')
 
@@ -102,7 +111,7 @@ fi
 # uniquely name network
 ############################################################################################
 
-user=`whoami`
+user=${username}
 random=`openssl rand -hex 2`
 network_name="${user}-${random}"
 
@@ -113,12 +122,12 @@ network_name="${user}-${random}"
 
 echo "--------------------------------------------------"
 echo "running casper-tool:"
-echo "./casper-tool.py create-network --genesis-in $genesis_in_seconds --hosts-file kube-hosts.yaml artifacts/$network_name"
+echo "./casper-tool.py --node-port ${node_port} collect-release --node-version ${node_version} artifacts/${network_name}"
 echo "--------------------------------------------------"
 
-./casper-tool.py --node-port $node_port collect-release --node-version $node_version artifacts/$network_name
-./casper-tool.py --node-port $node_port create-network --node-version $node_version artifacts/$network_name
-./casper-tool.py --node-port $node_port publish-network --node-version $node_version artifacts/$network_name --aws-profile casperlabs-default
+./casper-tool.py --node-port ${node_port} collect-release --node-version ${node_version} artifacts/${network_name}
+./casper-tool.py --node-port ${node_port} create-network --node-version ${node_version} artifacts/${network_name}
+./casper-tool.py --node-port ${node_port} publish-network --node-version ${node_version} artifacts/${network_name} --aws-profile default
 
 
 ############################################################################################
@@ -294,3 +303,4 @@ echo "Kibana Logs:"
 echo ""
 echo "http://$kibana_host/app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-15m,to:now))&_a=(columns:!(kubernetes.container.name,message),filters:!(('\$state':(store:appState),meta:(alias:!n,disabled:!f,index:'$kibana_filebeat_index',key:kubernetes.namespace,negate:!f,params:(query:$network_name),type:phrase),query:(match_phrase:(kubernetes.namespace:$network_name)))),index:'$kibana_filebeat_index',interval:auto,query:(language:kuery,query:''),sort:!())"
 
+echo "$network_name"
