@@ -46,6 +46,7 @@ echo "node_mem: ${FLAGS_node_mem}"
 echo "node_storage: ${FLAGS_node_storage}"
 echo "genesis_in_seconds: ${FLAGS_genesis_in_seconds}"
 echo "username: ${FLAGS_username}"
+echo "kubeconfig: ${FLAGS_kubeconfig}"
 
 node_count=$FLAGS_node_count
 node_version=$FLAGS_node_version
@@ -57,8 +58,9 @@ node_cpu_request=$FLAGS_node_cpu
 node_storage=$FLAGS_node_storage
 genesis_in_seconds=$FLAGS_genesis_in_seconds
 username=${FLAGS_username}
+kubeconfig=${FLAGS_kubeconfig}
 
-export KUBECONFIG=/tmp/function/.kube/config
+export KUBECONFIG=${kubeconfig}
 
 
 ############################################################################################
