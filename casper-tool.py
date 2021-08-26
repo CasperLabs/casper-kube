@@ -222,8 +222,11 @@ def publish_network(
         if target_s3_bucket:
 
             show_val("AWS S3 Bucket", target_s3_bucket)
-
-            session = boto3.session.Session(profile_name=aws_profile)
+            session = None
+            if aws_profile=="None":
+                session = boto3.session.Session()
+            else:
+                session = boto3.session.Session(profile_name=aws_profile)
             s3 = session.client('s3')
 
             for path, subdirs, files in os.walk(target_path):

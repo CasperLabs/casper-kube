@@ -28,6 +28,7 @@ DEFINE_string 'node_storage' '1Gi' 'node storage volume size' 's'
 DEFINE_string 'genesis_in_seconds' '300' 'genesis start x seconds in the future' 'g'
 DEFINE_string 'username' '$(whoami)' 'username' 'u'
 DEFINE_string 'kubeconfig' '${HOME}/.kube/config' 'kubeconfig' 'k'
+DEFINE_string 'aws_profile' 'default' 'aws profile' 'a'
 
 
 # Parse the command-line.
@@ -47,6 +48,7 @@ echo "node_storage: ${FLAGS_node_storage}"
 echo "genesis_in_seconds: ${FLAGS_genesis_in_seconds}"
 echo "username: ${FLAGS_username}"
 echo "kubeconfig: ${FLAGS_kubeconfig}"
+echo "aws_profile: ${FLAGS_aws_profile}"
 
 node_count=$FLAGS_node_count
 node_version=$FLAGS_node_version
@@ -59,6 +61,7 @@ node_storage=$FLAGS_node_storage
 genesis_in_seconds=$FLAGS_genesis_in_seconds
 username=${FLAGS_username}
 kubeconfig=${FLAGS_kubeconfig}
+aws_profile=${FLAGS_aws_profile}
 
 export KUBECONFIG=${kubeconfig}
 
@@ -129,7 +132,7 @@ echo "--------------------------------------------------"
 
 ./casper-tool.py --node-port ${node_port} collect-release --node-version ${node_version} artifacts/${network_name}
 ./casper-tool.py --node-port ${node_port} create-network --node-version ${node_version} artifacts/${network_name}
-./casper-tool.py --node-port ${node_port} publish-network --node-version ${node_version} artifacts/${network_name} --aws-profile default
+./casper-tool.py --node-port ${node_port} publish-network --node-version ${node_version} artifacts/${network_name} --aws-profile ${aws_profile}
 
 
 ############################################################################################

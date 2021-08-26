@@ -1,5 +1,7 @@
 #!/bin/bash
 source ./shflags
+
+# Build bucket name
 BUCKET_NAME="builds.casperlabs.io"
 
 DEFINE_string 'network_name' '' 'network name' 'n'
@@ -39,4 +41,4 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo "Successfully deleted kubernetes cluster"
+echo "Successfully deleted kubernetes network : ${network_name}"
