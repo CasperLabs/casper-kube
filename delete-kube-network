@@ -1,0 +1,44 @@
+#!/bin/bash
+source ./shflags
+
+# Build bucket name
+BUCKET_NAME="builds.casperlabs.io"
+
+DEFINE_string 'network_name' '' 'network name' 'n'
+DEFINE_string 'kubeconfig' '${HOME}/.kube/config' 'kubeconfig' 'k'
+
+# Parse the command-line.
+FLAGS "$@" || exit 1
+eval set -- "${FLAGS_ARGV}"
+
+network_name=${FLAGS_network_name}
+kubeconfig=${FLAGS_kubeconfig}
+
+if [ -z "${network_name}" ]; then
+  echo "Network name not provided"
+  exit 1
+fi
+
+echo "network_name: ${FLAGS_network_name}"
+echo "kubeconfig: ${FLAGS_kubeconfig}"
+
+export KUBECONFIG=${kubeconfig}
+
+aws s3 rm s3://${BUCKET_NAME}/networks/${network_name} --recursive
+
+if [ $? -ne 0 ]; then
+  echo "Error removing artifacts from s3"
+  exit 1
+fi
+
+echo "Successfully deleted network artifacts"
+echo "Deleting kubernetes cluster"
+
+kubectl delete ns ${network_name}
+
+if [ $? -ne 0 ]; then
+  echo "Error deleting the network"
+  exit 1
+fi
+
+echo "Successfully deleted kubernetes network : ${network_name}"
