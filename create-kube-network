@@ -29,6 +29,7 @@ DEFINE_string 'genesis_in_seconds' '300' 'genesis start x seconds in the future'
 DEFINE_string 'username' '$(whoami)' 'username' 'u'
 DEFINE_string 'kubeconfig' '${HOME}/.kube/config' 'kubeconfig' 'k'
 DEFINE_string 'aws_profile' 'default' 'aws profile' 'a'
+DEFINE_string 'network_name' 'default' 'network name' 'N'
 
 
 # Parse the command-line.
@@ -49,6 +50,7 @@ echo "genesis_in_seconds: ${FLAGS_genesis_in_seconds}"
 echo "username: ${FLAGS_username}"
 echo "kubeconfig: ${FLAGS_kubeconfig}"
 echo "aws_profile: ${FLAGS_aws_profile}"
+echo "network_name: ${FLAGS_network_name}"
 
 node_count=$FLAGS_node_count
 node_version=$FLAGS_node_version
@@ -62,6 +64,7 @@ genesis_in_seconds=$FLAGS_genesis_in_seconds
 username=${FLAGS_username}
 kubeconfig=${FLAGS_kubeconfig}
 aws_profile=${FLAGS_aws_profile}
+network_name=${FLAGS_network_name}
 
 export KUBECONFIG=${kubeconfig}
 
@@ -115,11 +118,24 @@ fi
 ############################################################################################
 # uniquely name network
 ############################################################################################
+# check if provided namespace already exists
+function check_namespace() {
+    namespace=$1
+    kubectl get ns | grep ${namespace}
+
+    if [ $? -ne 0 ]; then
+        echo "Namespace does not exists"
+        return 1
+    fi
+    echo "Provided namespace already exists"
+    return 0
+}
 
 user=${username}
 random=`openssl rand -hex 2`
-network_name="${user}-${random}"
-
+if [[ "${network-name}" == "default" ]] || check_namespace network_name; then
+    network_name="${user}-${random}"
+fi
 
 ############################################################################################
 # generate casper-tool artifacts
