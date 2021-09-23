@@ -133,7 +133,7 @@ function check_namespace() {
 
 user=${username}
 random=`openssl rand -hex 2`
-if [[ "${network-name}" == "default" ]] || check_namespace network_name; then
+if [[ "${network_name}" == "default" ]] || check_namespace ${network_name}; then
     network_name="${user}-${random}"
 fi
 
