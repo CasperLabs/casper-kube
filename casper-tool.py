@@ -575,11 +575,9 @@ def generate_node_config(known_addresses, config_template, obj, nodes_path, node
     config["storage"]["path"] = storage_path
 
     try:
-        config["consensus"]["highway"]
-    except NameError:
-        config["consensus"]["unit_hashes_folder"] = storage_path
-    else:
         config["consensus"]["highway"]["unit_hashes_folder"] = storage_path
+    except KeyError:
+        config["consensus"]["unit_hashes_folder"] = storage_path
 
     toml.dump(config, open(os.path.join(node_config_path, "config.toml", ), "w"))
 
@@ -606,11 +604,10 @@ def generate_example_node_config(known_addresses, config_template, obj, nodes_pa
     config["storage"]["path"] = storage_path
     config["network"]["gossip_interval"] = 120000
     try:
-        config["consensus"]["highway"]
-    except NameError:
-        config["consensus"]["unit_hashes_folder"] = storage_path
-    else:
         config["consensus"]["highway"]["unit_hashes_folder"] = storage_path
+    except KeyError:
+        config["consensus"]["unit_hashes_folder"] = storage_path
+        
     toml.dump(config, open(os.path.join(node_config_path, "config-example.toml", ), "w"))
 
 # create chainspec.toml
