@@ -175,7 +175,7 @@ for index in $(seq 1 $node_count)
 do
 
 zero_pad_index=$(printf %03d $index)
-node_label="casper-node-$zero_pad_index"
+node_label="casper-node-${network_name}-${zero_pad_index}"
 
 cat << EOF >> $kube_resources_yaml
 #
@@ -290,7 +290,7 @@ for index in $(seq 1 $node_count)
 do
 
 zero_pad_index=$(printf %03d $index)
-node_label="casper-node-$zero_pad_index"
+node_label="casper-node-${network_name}-${zero_pad_index}"
 
 cat << EOF >> $kube_resources_yaml
   - host: $node_label.k8s.srtip.casperlabs.io
