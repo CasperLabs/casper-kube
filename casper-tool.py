@@ -278,8 +278,8 @@ def collect_release(
 
     source_packages_path = os.path.join(target_path, "source")
 
-    protocol_source_packages_path = os.path.join(source_packages_path, node_version)
-    protocol_source_packages_download_path = os.path.join(source_packages_path, node_version, "download")
+    protocol_source_packages_path = os.path.join(source_packages_path, "1_0_0")
+    protocol_source_packages_download_path = os.path.join(source_packages_path, "1_0_0", "download")
 
     Path(protocol_source_packages_download_path).mkdir(parents=True, exist_ok=True)
 
@@ -366,10 +366,11 @@ def create_network(
     source_config,
     source_casper_node
 ):
-
+    
     if not network_name:
         network_name = os.path.basename(os.path.join(target_path))
 
+    node_version = "1_0_0" 
     # Create the network output directories.
     show_val("Output path", target_path)
 
@@ -633,7 +634,7 @@ def create_chainspec(template, network_name, genesis_in):
     chainspec["core"]["auction_delay"] = 1 # normally 3
     chainspec["core"]["era_duration"] = "15min" # normally 30min
     chainspec["deploys"]["block_max_transfer_count"] = 500
-    chainspec["protocol"]["version"] = "1.0.0"
+    chainspec["protocol"]["version"] = '1.0.0'
     return chainspec
 
 
