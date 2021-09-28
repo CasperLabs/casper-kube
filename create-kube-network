@@ -53,7 +53,7 @@ echo "aws_profile: ${FLAGS_aws_profile}"
 echo "network_name: ${FLAGS_network_name}"
 
 node_count=$FLAGS_node_count
-node_version=$FLAGS_node_version
+release_node_version=$FLAGS_node_version
 node_port=$FLAGS_node_port
 node_mem_limit=$FLAGS_node_mem
 node_mem_request=$FLAGS_node_mem
@@ -65,6 +65,7 @@ username=${FLAGS_username}
 kubeconfig=${FLAGS_kubeconfig}
 aws_profile=${FLAGS_aws_profile}
 network_name=${FLAGS_network_name}
+node_version="1_0_0"
 
 export KUBECONFIG=${kubeconfig}
 
@@ -143,12 +144,12 @@ fi
 
 echo "--------------------------------------------------"
 echo "running casper-tool:"
-echo "./casper-tool.py --node-port ${node_port} collect-release --node-version ${node_version} artifacts/${network_name}"
+echo "./casper-tool.py --node-port ${node_port} collect-release --node-version ${release_node_version} artifacts/${network_name}"
 echo "--------------------------------------------------"
 
-./casper-tool.py --node-port ${node_port} collect-release --node-version ${node_version} artifacts/${network_name}
-./casper-tool.py --node-port ${node_port} create-network --node-version "1_0_0" artifacts/${network_name}
-./casper-tool.py --node-port ${node_port} publish-network --node-version "1_0_0" artifacts/${network_name} --aws-profile ${aws_profile}
+./casper-tool.py --node-port ${node_port} collect-release --node-version ${release_node_version} artifacts/${network_name}
+./casper-tool.py --node-port ${node_port} create-network --node-version ${node_version} artifacts/${network_name}
+./casper-tool.py --node-port ${node_port} publish-network --node-version ${node_version} artifacts/${network_name} --aws-profile ${aws_profile}
 
 
 ############################################################################################

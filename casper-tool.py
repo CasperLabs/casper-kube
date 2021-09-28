@@ -633,6 +633,7 @@ def create_chainspec(template, network_name, genesis_in):
     chainspec["core"]["auction_delay"] = 1 # normally 3
     chainspec["core"]["era_duration"] = "15min" # normally 30min
     chainspec["deploys"]["block_max_transfer_count"] = 500
+    chainspec["protocol"]["version"] = "1.0.0"
     return chainspec
 
 
