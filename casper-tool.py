@@ -278,8 +278,8 @@ def collect_release(
 
     source_packages_path = os.path.join(target_path, "source")
 
-    protocol_source_packages_path = os.path.join(source_packages_path, "1_0_0")
-    protocol_source_packages_download_path = os.path.join(source_packages_path, "1_0_0", "download")
+    protocol_source_packages_path = os.path.join(source_packages_path, node_version)
+    protocol_source_packages_download_path = os.path.join(source_packages_path, node_version, "download")
 
     Path(protocol_source_packages_download_path).mkdir(parents=True, exist_ok=True)
 
