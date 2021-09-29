@@ -30,10 +30,13 @@ fi
 #fi
 
 #config
-aws s3 sync s3://$bucket_name/networks/$NETWORK_NAME/nodes/casper-node-$NETWORK_NAME-$CASPER_NODE_INDEX/etc/ /etc/
+echo "aws s3 sync s3://${bucket_name}/networks/${NETWORK_NAME}/nodes/casper-node-${NETWORK_NAME}-${CASPER_NODE_INDEX}/etc/ /etc/"
+aws s3 sync s3://$bucket_name/networks/$NETWORK_NAME/nodes/casper-node-${NETWORK_NAME}-${CASPER_NODE_INDEX}/etc/ /etc/
 
 #binary
 aws s3 sync s3://$bucket_name/networks/$NETWORK_NAME/staging/bin /var/lib/casper/bin
 chmod +x /var/lib/casper/bin/$CASPER_NODE_VERSION/casper-node
+
+ls /etc/casper
 
 bash -c "exec /usr/bin/casper-node-launcher"
