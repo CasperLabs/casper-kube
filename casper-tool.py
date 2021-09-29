@@ -354,6 +354,12 @@ def collect_release(
     type=click.Path(exists=True, dir_okay=False, readable=True),
     help="Casper node binary to source from",
 )
+@click.option(
+    "--target-node-version",
+    type=str,
+    help="semver with underscores e.g. 1_0_0",
+    default="None"
+)
 # create network
 def create_network(
     obj,
@@ -364,13 +370,15 @@ def create_network(
     node_version,
     source_chainspec,
     source_config,
-    source_casper_node
+    source_casper_node,
+    target_node_version
 ):
     
     if not network_name:
         network_name = os.path.basename(os.path.join(target_path))
+    if target_node_version == "None":
+        target_node_version = node_version
 
-    node_version = "1_0_0" 
     # Create the network output directories.
     show_val("Output path", target_path)
 
@@ -383,16 +391,16 @@ def create_network(
     sources_version_path = \
         os.path.join(sources_path, node_version)
     target_version_path = \
-        os.path.join(target_path, node_version)
+        os.path.join(target_path, target_node_version)
 
     bin_path = \
         os.path.join(staging_path, "bin")
     bin_version_path = \
-        os.path.join(staging_path, "bin", node_version)
+        os.path.join(staging_path, "bin", target_node_version)
     config_path = \
         os.path.join(staging_path, "config")
     config_version_path = \
-        os.path.join(config_path, node_version)
+        os.path.join(config_path, target_node_version)
 
     # Staging directories for config, chain
     show_val("Node version", node_version)
@@ -470,7 +478,7 @@ def create_network(
                 nodes_path, public_address, "etc", "casper", "keys")
             account = generate_account_key(key_path, public_address, obj)
             generate_node_config(bootstrap_nodes, config_template, obj, nodes_path,
-                        node_version, public_address, None)
+                        target_node_version, public_address, None)
             validator_keys.append(account)
 
         initial_known_nodes = bootstrap_nodes
@@ -482,7 +490,7 @@ def create_network(
             account = generate_account_key(key_path, public_address, obj)
             generate_node_config(
                 initial_known_nodes + validator_nodes, config_template,
-                obj, nodes_path, node_version, public_address, None)
+                obj, nodes_path, target_node_version, public_address, None)
             validator_keys.append(account)
 
         for public_address in zero_weight_nodes:
@@ -492,13 +500,13 @@ def create_network(
             account = generate_account_key(key_path, public_address, obj)
             generate_node_config(
                 initial_known_nodes + validator_nodes, config_template,
-                obj, nodes_path, node_version, public_address, None)
+                obj, nodes_path, target_node_version, public_address, None)
             zero_weight_keys.append(account)
 
         # config-example.toml
         generate_example_node_config(
                 initial_known_nodes + validator_nodes, config_template,
-                obj, config_version_path, node_version, "<EXAMPLE>", None)
+                obj, config_version_path, target_node_version, "<EXAMPLE>", None)
 
         faucet_path = os.path.join(staging_path, "faucet")
         faucet_key = generate_account_key(faucet_path, "faucet", obj)
@@ -519,7 +527,7 @@ def create_network(
 
             # should already exist
             node_config_path = \
-                os.path.join(node_path, "etc", "casper", node_version)
+                os.path.join(node_path, "etc", "casper", target_node_version)
 
             node_key_path = os.path.join(node_path, "etc", "casper", "keys")
 
@@ -538,7 +546,7 @@ def create_network(
                 )
 
         # Create config.tar.gz and bin.tar.gz for publishing
-        create_protocol_package(network_name, obj, bin_version_path, config_version_path, target_path, node_version)
+        create_protocol_package(network_name, obj, bin_version_path, config_version_path, target_path, target_node_version)
 
     except Exception as e:
         print("Error %s" %e)
@@ -634,7 +642,7 @@ def create_chainspec(template, network_name, genesis_in):
     chainspec["core"]["auction_delay"] = 1 # normally 3
     chainspec["core"]["era_duration"] = "15min" # normally 30min
     chainspec["deploys"]["block_max_transfer_count"] = 500
-    chainspec["protocol"]["version"] = '1.0.0'
+    chainspec["protocol"]["version"] = "1.0.0"
     return chainspec
 
 

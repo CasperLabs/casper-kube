@@ -150,7 +150,7 @@ echo "./casper-tool.py --node-port ${node_port} create-network --node-version ${
 echo "--------------------------------------------------"
 
 ./casper-tool.py --node-port ${node_port} collect-release --node-version ${release_node_version} artifacts/${network_name}
-./casper-tool.py --node-port ${node_port} create-network --node-version ${node_version} artifacts/${network_name}
+./casper-tool.py --node-port ${node_port} create-network --node-version ${release_node_version} --target-node-version ${node_version} artifacts/${network_name}
 ./casper-tool.py --node-port ${node_port} publish-network --node-version ${node_version} artifacts/${network_name} --aws-profile ${aws_profile}
 
 
