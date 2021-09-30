@@ -32,7 +32,7 @@ import tarfile, io
 @click.option(
     "--validator-count",
     type=int,
-    default=3,
+    default=1,
     help="Number of Validators",
 )
 @click.option(
