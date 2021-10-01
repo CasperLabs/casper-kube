@@ -310,7 +310,7 @@ cat << EOF >> $kube_resources_yaml
         backend:
           serviceName: $node_label
           servicePort: 7777
-      - path: /events
+      - path: /events/main
         backend:
           serviceName: $node_label
           servicePort: 9999
