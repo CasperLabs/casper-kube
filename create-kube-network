@@ -222,6 +222,10 @@ spec:
       protocol: TCP
       port: $node_port
       targetPort: $node_port
+    - name: events
+      protocol: TCP
+      port: 9999
+      targetPort: 9999
 
 ---
 kind: Deployment
@@ -310,7 +314,7 @@ cat << EOF >> $kube_resources_yaml
         backend:
           serviceName: $node_label
           servicePort: 7777
-      - path: /events/main
+      - path: /events
         backend:
           serviceName: $node_label
           servicePort: 9999
