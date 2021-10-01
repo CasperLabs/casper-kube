@@ -30,6 +30,9 @@ DEFINE_string 'username' '$(whoami)' 'username' 'u'
 DEFINE_string 'kubeconfig' '${HOME}/.kube/config' 'kubeconfig' 'k'
 DEFINE_string 'aws_profile' 'default' 'aws profile' 'a'
 DEFINE_string 'network_name' 'default' 'network name' 'N'
+DEFINE_string 'validator_node_count' '5' 'Count of Validator Nodes' 'V'
+DEFINE_string 'non_validator_node_count' '2' 'Count of Non Validator Nodes' 'P'
+
 
 
 # Parse the command-line.
@@ -51,6 +54,9 @@ echo "username: ${FLAGS_username}"
 echo "kubeconfig: ${FLAGS_kubeconfig}"
 echo "aws_profile: ${FLAGS_aws_profile}"
 echo "network_name: ${FLAGS_network_name}"
+echo "validator_node_count: ${FLAGS_validator_node_count}"
+echo "non_validator_node_count: ${FLAGS_non_validator_node_count}"
+
 
 node_count=$FLAGS_node_count
 node_version=$FLAGS_node_version
@@ -65,6 +71,9 @@ username=${FLAGS_username}
 kubeconfig=${FLAGS_kubeconfig}
 aws_profile=${FLAGS_aws_profile}
 network_name=${FLAGS_network_name}
+validator_node_count=${FLAGS_validator_node_count}
+non_validator_node_count=${FLAGS_non_validator_node_count}
+
 
 export KUBECONFIG=${kubeconfig}
 
@@ -133,7 +142,7 @@ function check_namespace() {
 
 user=${username}
 random=`openssl rand -hex 2`
-if [[ "${network-name}" == "default" ]] || check_namespace network_name; then
+if [[ "${network_name}" == "default" ]] || check_namespace ${network_name}; then
     network_name="${user}-${random}"
 fi
 
@@ -146,9 +155,9 @@ echo "running casper-tool:"
 echo "./casper-tool.py --node-port ${node_port} collect-release --node-version ${node_version} artifacts/${network_name}"
 echo "--------------------------------------------------"
 
-./casper-tool.py --node-port ${node_port} collect-release --node-version ${node_version} artifacts/${network_name}
-./casper-tool.py --node-port ${node_port} create-network --node-version ${node_version} artifacts/${network_name}
-./casper-tool.py --node-port ${node_port} publish-network --node-version ${node_version} artifacts/${network_name} --aws-profile ${aws_profile}
+./casper-tool.py --node-port ${node_port} --validator-count ${validator_node_count} --non-validator-count ${non_validator_node_count} collect-release --node-version ${node_version} artifacts/${network_name}
+./casper-tool.py --node-port ${node_port} --validator-count ${validator_node_count} --non-validator-count ${non_validator_node_count} create-network --node-version ${node_version} artifacts/${network_name}
+./casper-tool.py --node-port ${node_port} --validator-count ${validator_node_count} --non-validator-count ${non_validator_node_count} publish-network --node-version ${node_version} artifacts/${network_name} --aws-profile ${aws_profile}
 
 
 ############################################################################################
@@ -172,7 +181,7 @@ for index in $(seq 1 $node_count)
 do
 
 zero_pad_index=$(printf %03d $index)
-node_label="casper-node-$zero_pad_index"
+node_label="casper-node-${network_name}-${zero_pad_index}"
 
 cat << EOF >> $kube_resources_yaml
 #
@@ -287,7 +296,7 @@ for index in $(seq 1 $node_count)
 do
 
 zero_pad_index=$(printf %03d $index)
-node_label="casper-node-$zero_pad_index"
+node_label="casper-node-${network_name}-${zero_pad_index}"
 
 cat << EOF >> $kube_resources_yaml
   - host: $node_label.k8s.srtip.casperlabs.io
